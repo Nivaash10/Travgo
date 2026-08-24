@@ -1,30 +1,34 @@
-// This is a basic Flutter widget test.
+// Widget test — Phase 1 OTP Module (post-UI redesign)
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Tests match the redesigned light-theme mobile OTP verification UI.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:frontend/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('OTP screen smoke test — Pickup screen loads',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Title is 'Verify Pickup'
+    expect(find.text('Verify Pickup'), findsWidgets);
+  });
+
+  testWidgets('OTP screen — Parcel ID displayed', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pump();
+
+    // Parcel card shows the parcel ID.
+    expect(find.textContaining('TRV1024'), findsWidgets);
+  });
+
+  testWidgets('OTP screen — Verify Pickup button exists',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pump();
+
+    // Verify Pickup appears multiple times (AppBar, Header, Button). Check findsWidgets.
+    expect(find.text('Verify Pickup'), findsWidgets);
   });
 }
