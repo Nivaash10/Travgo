@@ -4,6 +4,8 @@ import 'payment_screen.dart';
 import 'payment_confirmation_screen.dart';
 import 'payment_status_screen.dart';
 import 'traveller_payout_screen.dart';
+import '../../notifications/screens/notifications_screen.dart';
+import '../../ratings/screens/rating_screen.dart';
 
 /// Person 5 — Payment Module Hub (mobile)
 
@@ -19,6 +21,31 @@ class PaymentDemoHubScreen extends StatelessWidget {
         elevation: 0,
         foregroundColor: kText,
         title: const Text('Payment', style: TextStyle(fontWeight: FontWeight.w600)),
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  );
+                },
+              ),
+              Positioned(
+                right: 10,
+                top: 10,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(color: kAccent, shape: BoxShape.circle),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: ListView(
@@ -73,17 +100,17 @@ class PaymentDemoHubScreen extends StatelessWidget {
               ),
             ),
             _menuTile(
-  context,
-  icon: Icons.timeline_outlined,
-  iconBg: const Color(0xFFFFF7ED),
-  iconColor: const Color(0xFFD97706),
-  title: 'Parcel status',
-  subtitle: 'Booking → payment → pickup → delivery',
-  onTap: () => Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const PaymentStatusScreen()),
-  ),
-),
+              context,
+              icon: Icons.timeline_outlined,
+              iconBg: const Color(0xFFFFF7ED),
+              iconColor: const Color(0xFFD97706),
+              title: 'Parcel status',
+              subtitle: 'Booking → payment → pickup → delivery',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PaymentStatusScreen()),
+              ),
+            ),
             _menuTile(
               context,
               icon: Icons.account_balance_wallet_outlined,
@@ -96,68 +123,39 @@ class PaymentDemoHubScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const TravellerPayoutScreen()),
               ),
             ),
+            _menuTile(
+              context,
+              icon: Icons.star_outline_rounded,
+              iconBg: const Color(0xFFFEF3C7),
+              iconColor: const Color(0xFFD97706),
+              title: 'Rate a traveller',
+              subtitle: 'Share your delivery experience',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RatingScreen(
+                    parcelId: 'PCL-2026-0417',
+                    travellerId: 'TRV-1042',
+                    travellerName: 'Arun Kumar',
+                  ),
+                ),
+              ),
+            ),
+            _menuTile(
+              context,
+              icon: Icons.notifications_outlined,
+              iconBg: const Color(0xFFEFF6FF),
+              iconColor: const Color(0xFF2563EB),
+              title: 'Notifications',
+              subtitle: 'Booking, payment and delivery alerts',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              ),
+            ),
           ],
         ),
       ),
-    );
-  }
-
-  void _showStagePicker(BuildContext context) {
-    const stages = [
-      'Booked',
-      'Payment confirmed',
-      'Picked up',
-      'In transit',
-      'Delivered',
-      'Payout settled',
-    ];
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  child: Text(
-                    'Jump to stage (testing)',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kMuted),
-                  ),
-                ),
-                for (int i = 0; i < stages.length; i++)
-                  ListTile(
-                    dense: true,
-                    leading: CircleAvatar(
-                      radius: 12,
-                      backgroundColor: kAccent.withOpacity(0.12),
-                      child: Text('${i + 1}',
-                          style: const TextStyle(fontSize: 12, color: kAccent, fontWeight: FontWeight.w700)),
-                    ),
-                    title: Text(stages[i], style: const TextStyle(fontSize: 14, color: kText)),
-                    onTap: () {
-                      Navigator.pop(context); // close sheet
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => PaymentStatusScreen(currentStep: i),
-                        ),
-                      );
-                    },
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 

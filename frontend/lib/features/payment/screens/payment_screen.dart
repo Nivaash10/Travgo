@@ -9,6 +9,7 @@ class PaymentScreen extends StatefulWidget {
   final String route;
   final double baseFare;
   final double serviceFee;
+  final String travellerName;
 
   const PaymentScreen({
     super.key,
@@ -16,6 +17,7 @@ class PaymentScreen extends StatefulWidget {
     this.route = 'Coimbatore → Chennai',
     this.baseFare = 100,
     this.serviceFee = 20,
+    this.travellerName = 'Arun Kumar',
   });
 
   @override
@@ -44,6 +46,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
             Text('Parcel ${widget.parcelId}', style: const TextStyle(color: kMuted, fontSize: 13)),
             const SizedBox(height: 4),
             Text(widget.route, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: kText)),
+            const SizedBox(height: 10),
+            _trustBadge(),
             const SizedBox(height: 20),
             _summaryCard(),
             const SizedBox(height: 24),
@@ -87,6 +91,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _trustBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFECFDF5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF059669).withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.verified, size: 16, color: Color(0xFF059669)),
+          const SizedBox(width: 6),
+          Text(
+            'Verified traveller · ${widget.travellerName}',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF059669)),
+          ),
+        ],
       ),
     );
   }
