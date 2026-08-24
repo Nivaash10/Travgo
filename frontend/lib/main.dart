@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'config/supabase_config.dart';
+import 'features/auth/screens/register_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,11 +18,7 @@ class TravgoApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'TRAVGO',
-      home: Scaffold(
-        body: Center(
-          child: Text('TRAVGO connected to Supabase'),
-        ),
-      ),
+      home: const RegisterScreen(),
     );
   }
 }
