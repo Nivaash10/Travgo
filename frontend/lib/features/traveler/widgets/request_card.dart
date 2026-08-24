@@ -22,7 +22,6 @@ class RequestCard extends StatelessWidget {
   static const Color warningColor = Color(0xFFF59E0B);
   static const Color textColor = Color(0xFF1E293B);
   static const Color subtitleColor = Color(0xFF64748B);
-  static const Color cardColor = Color(0xFFFFFFFF);
 
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
@@ -36,23 +35,44 @@ class RequestCard extends StatelessWidget {
     }
   }
 
+  Color _getStatusBgColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'ACCEPTED':
+        return const Color(0xFFECFDF5);
+      case 'REJECTED':
+        return const Color(0xFFFEF2F2);
+      case 'PENDING':
+      default:
+        return const Color(0xFFFEF3C7);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor(request.status);
+    final statusBgColor = _getStatusBgColor(request.status);
     final isPending = request.status.toUpperCase() == 'PENDING';
     final isAccepted = request.status.toUpperCase() == 'ACCEPTED';
     final isRejected = request.status.toUpperCase() == 'REJECTED';
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isAccepted
+              ? successColor.withValues(alpha: 0.3)
+              : isPending
+                  ? primaryColor.withValues(alpha: 0.2)
+                  : const Color(0xFFE2E8F0),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
+            blurRadius: 14,
             offset: const Offset(0, 4),
           ),
         ],
@@ -60,19 +80,26 @@ class RequestCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Sender Profile & Status Badge
+          // 1. Sender Header & Status Badge Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: primaryColor.withValues(alpha: 0.1),
-                    child: const Icon(
-                      Icons.person_rounded,
-                      color: primaryColor,
-                      size: 20,
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.3), width: 1.5),
+                    ),
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: primaryColor.withValues(alpha: 0.1),
+                      child: const Icon(
+                        Icons.person_rounded,
+                        color: primaryColor,
+                        size: 22,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -87,12 +114,14 @@ class RequestCard extends StatelessWidget {
                           color: textColor,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       const Text(
-                        'Sender',
+                        'PARCEL SENDER',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
                           color: subtitleColor,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -102,20 +131,18 @@ class RequestCard extends StatelessWidget {
 
               // Status Badge
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
+                  color: statusBgColor,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   request.status.toUpperCase(),
                   style: TextStyle(
                     color: statusColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -123,65 +150,185 @@ class RequestCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
-          // Parcel Info Box
+          // Trust Badge: Matched Journey Indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFDBEAFE)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle_rounded, size: 13, color: primaryColor),
+                SizedBox(width: 6),
+                Text(
+                  'MATCHED TO YOUR JOURNEY',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 2. Signature TRAVGO Route Visualizer
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Vertical Node Indicator
+              Column(
+                children: [
+                  const SizedBox(height: 3),
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                  Container(
+                    width: 2,
+                    height: 28,
+                    color: primaryColor.withValues(alpha: 0.3),
+                  ),
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: secondaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(width: 12),
+
+              // Route Cities
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      request.source,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      request.destination,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // 3. Parcel Details & Price Card
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      Icons.inventory_2_outlined,
-                      color: primaryColor,
-                      size: 18,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: const Icon(
+                        Icons.inventory_2_rounded,
+                        color: secondaryColor,
+                        size: 20,
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        request.parcelDescription,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            request.parcelDescription,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              const Icon(Icons.scale_rounded, size: 12, color: subtitleColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${request.parcelWeight} kg parcel',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: subtitleColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+
+                const SizedBox(height: 12),
+                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                const SizedBox(height: 10),
+
+                // Offered Price
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.scale_rounded,
-                          color: subtitleColor,
-                          size: 14,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${request.parcelWeight} kg',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: subtitleColor,
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      'OFFERED PRICE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: subtitleColor,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                     Text(
-                      '₹${request.price.toStringAsFixed(0)}',
+                      '₹${request.price.toInt()}',
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
                         color: primaryColor,
                       ),
                     ),
@@ -191,41 +338,9 @@ class RequestCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
-          // Route: Source -> Destination
-          Row(
-            children: [
-              const Icon(Icons.trip_origin_rounded, color: primaryColor, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                request.source,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8),
-                child: Icon(Icons.arrow_forward_rounded, color: subtitleColor, size: 14),
-              ),
-              const Icon(Icons.place_rounded, color: secondaryColor, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                request.destination,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          // Action Buttons
+          // 4. Interactive Actions Section
           if (isPending) ...[
             Row(
               children: [
@@ -234,9 +349,9 @@ class RequestCard extends StatelessWidget {
                     onPressed: onReject,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: errorColor,
-                      side: const BorderSide(color: errorColor),
+                      side: const BorderSide(color: Color(0xFFFCA5A5)),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -251,23 +366,26 @@ class RequestCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton(
+                  flex: 2,
+                  child: ElevatedButton.icon(
                     onPressed: onAccept,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: successColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text(
-                      'Accept',
+                    icon: const Icon(Icons.check_rounded, size: 18),
+                    label: const Text(
+                      'Accept Request',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                         fontSize: 14,
                       ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 3,
+                      shadowColor: primaryColor.withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
                 ),
@@ -276,32 +394,33 @@ class RequestCard extends StatelessWidget {
           ] else if (isAccepted) ...[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: successColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
               ),
               child: Column(
                 children: [
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_circle_rounded, color: successColor, size: 18),
+                      Icon(Icons.verified_rounded, color: successColor, size: 18),
                       SizedBox(width: 6),
                       Text(
                         'Request Accepted',
                         style: TextStyle(
-                          color: successColor,
+                          color: Color(0xFF065F46),
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    height: 38,
+                    height: 40,
                     child: ElevatedButton.icon(
                       onPressed: onActiveDeliveryTap,
                       icon: const Icon(Icons.navigation_rounded, size: 16),
@@ -317,7 +436,7 @@ class RequestCard extends StatelessWidget {
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
@@ -328,20 +447,21 @@ class RequestCard extends StatelessWidget {
           ] else if (isRejected) ...[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: errorColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.cancel_rounded, color: errorColor, size: 18),
+                  Icon(Icons.cancel_rounded, color: errorColor, size: 16),
                   SizedBox(width: 6),
                   Text(
                     'Request Rejected',
                     style: TextStyle(
-                      color: errorColor,
+                      color: Color(0xFF991B1B),
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),

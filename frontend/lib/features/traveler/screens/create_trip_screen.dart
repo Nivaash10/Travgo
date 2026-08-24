@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/tamil_nadu_cities.dart';
 import '../models/traveler_trip.dart';
 import '../repository/traveler_trip_repository.dart';
+import '../widgets/trip_capacity_price_card.dart';
+import '../widgets/trip_route_selector.dart';
 
 class CreateTripScreen extends StatefulWidget {
   const CreateTripScreen({super.key});
@@ -12,7 +13,6 @@ class CreateTripScreen extends StatefulWidget {
 
 class _CreateTripScreenState extends State<CreateTripScreen> {
   static const Color backgroundColor = Color(0xFFF6F8FC);
-  static const Color cardColor = Color(0xFFFFFFFF);
   static const Color primaryColor = Color(0xFF2563EB);
   static const Color secondaryColor = Color(0xFF14B8A6);
   static const Color textColor = Color(0xFF1E293B);
@@ -32,6 +32,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   bool _isNegotiable = true;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -49,7 +50,8 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return '${date.day} ${months[date.month - 1]} ${date.year} (${days[date.weekday % 7]})';
   }
 
   Future<void> _pickDate() async {
@@ -105,13 +107,23 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     }
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
+    FocusScope.of(context).unfocus();
+
     if (_formKey.currentState!.validate()) {
       if (_selectedDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a travel date'),
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.calendar_today_rounded, color: Colors.white, size: 18),
+                SizedBox(width: 10),
+                Text('Please select your travel date'),
+              ],
+            ),
+            backgroundColor: const Color(0xFFEF4444),
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
         return;
@@ -119,20 +131,37 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
 
       if (_selectedTime == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a travel time'),
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.access_time_rounded, color: Colors.white, size: 18),
+                SizedBox(width: 10),
+                Text('Please select your departure time'),
+              ],
+            ),
+            backgroundColor: const Color(0xFFEF4444),
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
         return;
       }
+
+      final formattedTime = _selectedTime!.format(context);
+
+      setState(() {
+        _isSubmitting = true;
+      });
+
+      // Subtle loading delay for smooth feedback
+      await Future.delayed(const Duration(milliseconds: 300));
 
       final newTrip = TravelerTrip(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         source: _sourceController.text.trim(),
         destination: _destinationController.text.trim(),
         travelDate: _selectedDate!,
-        travelTime: _selectedTime!.format(context),
+        travelTime: formattedTime,
         availableWeight: double.parse(_capacityController.text.trim()),
         price: double.parse(_priceController.text.trim()),
         isNegotiable: _isNegotiable,
@@ -141,498 +170,100 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
 
       TravelerTripRepository().addTrip(newTrip);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle_rounded, color: Colors.white),
-              SizedBox(width: 10),
-              Text('Trip created successfully!'),
-            ],
-          ),
-          backgroundColor: const Color(0xFF10B981),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
-
-      Navigator.pop(context, true);
-    }
-  }
-
-  Widget _buildCityAutocomplete({
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required String label,
-    required String hint,
-    required IconData prefixIcon,
-    required Color iconColor,
-    required String? Function(String?) validator,
-  }) {
-    return RawAutocomplete<String>(
-      textEditingController: controller,
-      focusNode: focusNode,
-      optionsBuilder: (TextEditingValue textEditingValue) {
-        if (textEditingValue.text.trim().isEmpty) {
-          return const Iterable<String>.empty();
-        }
-        final query = textEditingValue.text.trim().toLowerCase();
-        return TamilNaduCities.cities.where((city) => city.toLowerCase().contains(query));
-      },
-      onSelected: (String selection) {
-        controller.text = selection;
-        controller.selection = TextSelection.collapsed(offset: selection.length);
-      },
-      fieldViewBuilder: (context, fieldController, fieldFocusNode, onFieldSubmitted) {
-        return TextFormField(
-          controller: fieldController,
-          focusNode: fieldFocusNode,
-          style: const TextStyle(color: textColor),
-          decoration: _buildInputDecoration(
-            label: label,
-            hint: hint,
-            prefixIcon: prefixIcon,
-          ),
-          validator: validator,
-        );
-      },
-      optionsViewBuilder: (context, onSelected, options) {
-        return Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 6,
-            color: cardColor,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: MediaQuery.of(context).size.width - 80,
-              constraints: const BoxConstraints(maxHeight: 220),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: borderColor),
-              ),
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                shrinkWrap: true,
-                itemCount: options.length,
-                separatorBuilder: (context, index) =>
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                itemBuilder: (BuildContext context, int index) {
-                  final String option = options.elementAt(index);
-                  return InkWell(
-                    onTap: () => onSelected(option),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.location_city_rounded,
-                            size: 18,
-                            color: iconColor,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            option,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: textColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.white),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Trip Published! Your journey is now visible to parcel senders.',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         );
-      },
-    );
+
+        Navigator.pop(context, true);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: cardColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: textColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Create Trip',
-          style: TextStyle(
-            color: textColor,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Trip Route',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+    final hasRoute = _sourceController.text.trim().isNotEmpty &&
+        _destinationController.text.trim().isNotEmpty &&
+        _sourceController.text.trim().toLowerCase() !=
+            _destinationController.text.trim().toLowerCase();
 
-                    // Source Autocomplete
-                    _buildCityAutocomplete(
-                      controller: _sourceController,
-                      focusNode: _sourceFocusNode,
-                      label: 'Source',
-                      hint: 'e.g., Coimbatore',
-                      prefixIcon: Icons.trip_origin_rounded,
-                      iconColor: primaryColor,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter a source location';
-                        }
-                        if (_destinationController.text.trim().isNotEmpty &&
-                            value.trim().toLowerCase() ==
-                                _destinationController.text.trim().toLowerCase()) {
-                          return 'Source and destination cannot be the same.';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Destination Autocomplete
-                    _buildCityAutocomplete(
-                      controller: _destinationController,
-                      focusNode: _destinationFocusNode,
-                      label: 'Destination',
-                      hint: 'e.g., Chennai',
-                      prefixIcon: Icons.place_rounded,
-                      iconColor: secondaryColor,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter a destination location';
-                        }
-                        if (_sourceController.text.trim().isNotEmpty &&
-                            value.trim().toLowerCase() ==
-                                _sourceController.text.trim().toLowerCase()) {
-                          return 'Source and destination cannot be the same.';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        body: Column(
+          children: [
+            // 1. Clean Custom Screen Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: SafeArea(
+                bottom: false,
+                child: Row(
                   children: [
-                    const Text(
-                      'Date & Time',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    Row(
-                      children: [
-                        // Travel Date
-                        Expanded(
-                          child: InkWell(
-                            onTap: _pickDate,
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 14,
-                              ),
-                              decoration: BoxDecoration(
-                                color: backgroundColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: borderColor),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_today_rounded,
-                                    color: primaryColor,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Travel Date',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: subtitleColor,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          _selectedDate != null
-                                              ? _formatDate(_selectedDate!)
-                                              : 'Select date',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: _selectedDate != null
-                                                ? textColor
-                                                : subtitleColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 12),
-
-                        // Travel Time
-                        Expanded(
-                          child: InkWell(
-                            onTap: _pickTime,
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 14,
-                              ),
-                              decoration: BoxDecoration(
-                                color: backgroundColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: borderColor),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.access_time_rounded,
-                                    color: secondaryColor,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Travel Time',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: subtitleColor,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          _selectedTime != null
-                                              ? _selectedTime!.format(context)
-                                              : 'Select time',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: _selectedTime != null
-                                                ? textColor
-                                                : subtitleColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Capacity & Pricing',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Available Capacity
-                    TextFormField(
-                      controller: _capacityController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      style: const TextStyle(color: textColor),
-                      decoration: _buildInputDecoration(
-                        label: 'Available Capacity (kg)',
-                        hint: 'e.g., 5',
-                        prefixIcon: Icons.scale_rounded,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter available capacity';
-                        }
-                        final capacity = double.tryParse(value.trim());
-                        if (capacity == null || capacity <= 0) {
-                          return 'Capacity must be greater than 0 kg';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Price
-                    TextFormField(
-                      controller: _priceController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      style: const TextStyle(color: textColor),
-                      decoration: _buildInputDecoration(
-                        label: 'Price (₹)',
-                        hint: 'e.g., 100',
-                        prefixIcon: Icons.currency_rupee_rounded,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter price';
-                        }
-                        final price = double.tryParse(value.trim());
-                        if (price == null || price < 0) {
-                          return 'Price must be greater than or equal to 0';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Negotiable Switch
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: backgroundColor,
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => Navigator.pop(context),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: borderColor),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Price Negotiable',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: textColor,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Allow senders to negotiate price',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: subtitleColor,
-                                ),
-                              ),
-                            ],
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: borderColor),
                           ),
-                          Switch(
-                            value: _isNegotiable,
-                            activeThumbColor: primaryColor,
-                            onChanged: (val) {
-                              setState(() {
-                                _isNegotiable = val;
-                              });
-                            },
+                          child: const Icon(
+                            Icons.arrow_back_rounded,
+                            color: textColor,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Create a Trip',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          Text(
+                            'Share your journey • Carry parcels • Earn',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: subtitleColor,
+                            ),
                           ),
                         ],
                       ),
@@ -640,68 +271,356 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                   ],
                 ),
               ),
+            ),
 
-              const SizedBox(height: 24),
+            // Main Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 2. Journey Route Selector Card (Centerpiece)
+                      TripRouteSelector(
+                        sourceController: _sourceController,
+                        destinationController: _destinationController,
+                        sourceFocusNode: _sourceFocusNode,
+                        destinationFocusNode: _destinationFocusNode,
+                        sourceValidator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter a source city';
+                          }
+                          if (_destinationController.text.trim().isNotEmpty &&
+                              value.trim().toLowerCase() ==
+                                  _destinationController.text.trim().toLowerCase()) {
+                            return 'Source and destination cannot be the same.';
+                          }
+                          return null;
+                        },
+                        destinationValidator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter a destination city';
+                          }
+                          if (_sourceController.text.trim().isNotEmpty &&
+                              value.trim().toLowerCase() ==
+                                  _sourceController.text.trim().toLowerCase()) {
+                            return 'Source and destination cannot be the same.';
+                          }
+                          return null;
+                        },
+                        onChanged: () => setState(() {}),
+                      ),
 
-              // Create Trip Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Publish Trip',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                      const SizedBox(height: 20),
+
+                      // 3. Date & Time Selection Section
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: borderColor),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.event_available_rounded, color: primaryColor, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'WHEN ARE YOU TRAVELING?',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w900,
+                                    color: textColor,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+
+                            Row(
+                              children: [
+                                // Date Picker Card
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: _pickDate,
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF8FAFC),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: _selectedDate != null
+                                              ? primaryColor.withValues(alpha: 0.4)
+                                              : borderColor,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Row(
+                                            children: [
+                                              Icon(
+                                                Icons.calendar_month_rounded,
+                                                color: primaryColor,
+                                                size: 18,
+                                              ),
+                                              SizedBox(width: 6),
+                                              Text(
+                                                'TRAVEL DATE',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: subtitleColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            _selectedDate != null
+                                                ? _formatDate(_selectedDate!)
+                                                : 'Select date',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: _selectedDate != null
+                                                  ? textColor
+                                                  : subtitleColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 12),
+
+                                // Time Picker Card
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: _pickTime,
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF8FAFC),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: _selectedTime != null
+                                              ? secondaryColor.withValues(alpha: 0.4)
+                                              : borderColor,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Row(
+                                            children: [
+                                              Icon(
+                                                Icons.access_time_filled_rounded,
+                                                color: secondaryColor,
+                                                size: 18,
+                                              ),
+                                              SizedBox(width: 6),
+                                              Text(
+                                                'DEPARTURE',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: subtitleColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            _selectedTime != null
+                                                ? _selectedTime!.format(context)
+                                                : 'Select time',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: _selectedTime != null
+                                                  ? textColor
+                                                  : subtitleColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // 4. Capacity & Price Card
+                      TripCapacityPriceCard(
+                        capacityController: _capacityController,
+                        priceController: _priceController,
+                        isNegotiable: _isNegotiable,
+                        onNegotiableChanged: (val) {
+                          setState(() {
+                            _isNegotiable = val;
+                          });
+                        },
+                        capacityValidator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter available capacity';
+                          }
+                          final cap = double.tryParse(value.trim());
+                          if (cap == null || cap <= 0) {
+                            return 'Capacity must be greater than 0 kg';
+                          }
+                          return null;
+                        },
+                        priceValidator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter price';
+                          }
+                          final p = double.tryParse(value.trim());
+                          if (p == null || p < 0) {
+                            return 'Price must be 0 or higher';
+                          }
+                          return null;
+                        },
+                        onChanged: () => setState(() {}),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // 5. Pre-Publish Trip Summary Card
+                      if (hasRoute) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFEFF6FF), Color(0xFFF8FAFC)],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: primaryColor.withValues(alpha: 0.25)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.fact_check_rounded, color: primaryColor, size: 18),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'TRIP SUMMARY PREVIEW',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                      color: primaryColor,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                '${_sourceController.text.trim()} → ${_destinationController.text.trim()}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${_selectedDate != null ? _formatDate(_selectedDate!) : "Date pending"} • ${_selectedTime != null ? _selectedTime!.format(context) : "Time pending"}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: subtitleColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${_capacityController.text.trim().isEmpty ? "0" : _capacityController.text.trim()} kg capacity • ₹${_priceController.text.trim().isEmpty ? "0" : _priceController.text.trim()} • ${_isNegotiable ? "Negotiable" : "Fixed price"}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: secondaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // 6. Publish Trip Hero Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submitForm,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 4,
+                            shadowColor: primaryColor.withValues(alpha: 0.35),
+                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Publish Trip',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.arrow_forward_rounded, size: 20),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  InputDecoration _buildInputDecoration({
-    required String label,
-    required String hint,
-    required IconData prefixIcon,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      labelStyle: const TextStyle(color: subtitleColor, fontSize: 14),
-      hintStyle: const TextStyle(color: subtitleColor, fontSize: 13),
-      prefixIcon: Icon(prefixIcon, color: primaryColor, size: 20),
-      filled: true,
-      fillColor: backgroundColor,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: borderColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primaryColor, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
       ),
     );
   }
