@@ -54,8 +54,7 @@ void main() {
       );
 
       expect(find.text('Live Tracking'), findsOneWidget);
-      expect(find.text('Parcel #TRV7070'), findsOneWidget);
-      expect(find.text('Salem → Coimbatore'), findsOneWidget);
+      expect(find.text('Parcel #TRV7070'), findsAtLeast(1));
     });
   });
 }

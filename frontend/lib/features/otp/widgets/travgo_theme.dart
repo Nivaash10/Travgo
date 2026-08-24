@@ -141,7 +141,7 @@ class TravgoCard extends StatelessWidget {
   }
 }
 
-/// TRAVGO primary button — full width, 52 px tall.
+/// TRAVGO primary button — full width, 52 px tall, overflow-safe.
 class TravgoPrimaryButton extends StatelessWidget {
   const TravgoPrimaryButton({
     super.key,
@@ -170,6 +170,7 @@ class TravgoPrimaryButton extends StatelessWidget {
           disabledForegroundColor: TravgoColors.textSecondary,
           elevation: 0,
           shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -181,12 +182,15 @@ class TravgoPrimaryButton extends StatelessWidget {
               Icon(icon, size: 20),
               const SizedBox(width: 8),
             ],
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.2,
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -248,13 +252,16 @@ class ParcelStatusChip extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Text(
-            status.label,
-            style: TextStyle(
-              color: status.dotColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
+          Flexible(
+            child: Text(
+              status.label,
+              style: TextStyle(
+                color: status.dotColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -299,6 +306,4 @@ class ParcelStatusUi {
     bgColor: TravgoColors.successBg,
     dotColor: TravgoColors.success,
   );
-
-
 }

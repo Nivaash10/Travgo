@@ -1,8 +1,8 @@
-/// Professional Satellite Live Tracking Screen — Dynamic Road-Aligned Navigation UI
+/// Professional Satellite Live Tracking Screen — Fully Responsive Navigation UI
 ///
 /// Hero Satellite map UI using `flutter_map` + Esri World Imagery & OSRM Road Routing.
-/// Supports ANY dynamic source and destination coordinate pair via [ParcelTrip] or direct arguments.
-/// Features dark translucent overlays, compact bottom sheet (~25% screen height max),
+/// Adapts seamlessly across Small Phones (<360px), Medium/Large Phones, Tablets (Portrait & Landscape), and Desktop/Web.
+/// Features dual layout engines (Vertical Overlay for Portrait, Side-by-Side Dual Pane for Landscape/Tablet/Desktop),
 /// OSRM road-following route calculation (with primary & alternative routes),
 /// real device GPS updates with accuracy filtering (<=35m) and local road-snapping,
 /// route deviation detection, and Delivery OTP handover.
@@ -436,15 +436,92 @@ class _TrackingScreenState extends State<TrackingScreen> {
     }
   }
 
-  // ─── Build ────────────────────────────────────────────────────────────────
+  // ─── Responsive Build Engine ──────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Dark slate theme
-      body: Stack(
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+    final screenWidth = mediaQuery.size.width;
+
+    Widget mainContent;
+
+    // Dual-Pane Side-by-Side Layout for Landscape / Tablet / Desktop (>600px width AND landscape)
+    if (screenWidth >= 760 || (screenWidth >= 600 && isLandscape)) {
+      mainContent = Row(
         children: [
-          // ── Layer 0: Hero Full-Screen Satellite Map Canvas ─────────────────
+          // Left Pane (65% width): Hero Satellite Map
+          Expanded(
+            flex: 65,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: TrackingMap(
+                    sourceName: _sourceName,
+                    destinationName: _destinationName,
+                    sourceLocation: _sourceLocation,
+                    destinationLocation: _destinationLocation,
+                    pickupLocation: _pickupLocation,
+                    deliveryLocation: _deliveryLocation,
+                    locationHistory: _locationHistory,
+                    plannedRoute: _plannedRoute,
+                    alternativeRoutes: _alternativeRoutes,
+                    currentLocation: _currentLocation,
+                    isFollowingTraveller: _isFollowingTraveller,
+                    onUserPanned: () {
+                      if (_isFollowingTraveller) {
+                        setState(() {
+                          _isFollowingTraveller = false;
+                        });
+                      }
+                    },
+                    height: double.infinity,
+                  ),
+                ),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildDarkOverlayAppBar(),
+                ),
+                if (_routingError != null)
+                  Positioned(
+                    top: 85,
+                    left: 16,
+                    right: 80,
+                    child: _buildRoutingErrorBanner(),
+                  )
+                else if (_isOffRoute && _status != ParcelStatus.delivered)
+                  Positioned(
+                    top: 85,
+                    left: 16,
+                    right: 80,
+                    child: _buildRouteDeviationBanner(),
+                  ),
+              ],
+            ),
+          ),
+
+          // Right Pane (35% width): Navigation Details Card
+          SizedBox(
+            width: (screenWidth * 0.35).clamp(320.0, 440.0),
+            child: Container(
+              color: const Color(0xF00F172A),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: _buildSidePanelContent(),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      // Mobile / Tablet Portrait Vertical Overlay Layout
+      mainContent = Stack(
+        children: [
+          // Hero Map
           Positioned.fill(
             child: TrackingMap(
               sourceName: _sourceName,
@@ -469,7 +546,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             ),
           ),
 
-          // ── Layer 1: Minimalist Translucent Overlay App Bar ────────────────
+          // App Bar
           Positioned(
             top: 0,
             left: 0,
@@ -477,23 +554,23 @@ class _TrackingScreenState extends State<TrackingScreen> {
             child: _buildDarkOverlayAppBar(),
           ),
 
-          // ── Layer 2: Routing Alert / Deviation Banner ─────────────────────
+          // Alerts
           if (_routingError != null)
             Positioned(
-              top: 90,
+              top: 85,
               left: 16,
               right: 80,
               child: _buildRoutingErrorBanner(),
             )
           else if (_isOffRoute && _status != ParcelStatus.delivered)
             Positioned(
-              top: 90,
+              top: 85,
               left: 16,
               right: 80,
               child: _buildRouteDeviationBanner(),
             ),
 
-          // ── Layer 3: Compact Navigation Bottom Panel (~25% Screen Height) ──
+          // Compact Bottom Panel (~25% height max)
           Positioned(
             left: 0,
             right: 0,
@@ -501,7 +578,25 @@ class _TrackingScreenState extends State<TrackingScreen> {
             child: _buildCompactBottomPanel(),
           ),
         ],
-      ),
+      );
+    }
+
+    // Centered Desktop / Web Surface for large displays (>= 1200px)
+    if (screenWidth >= 1200) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF020617), // Deep charcoal outer fill
+        body: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 1360),
+            child: mainContent,
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
+      body: mainContent,
     );
   }
 
@@ -542,19 +637,20 @@ class _TrackingScreenState extends State<TrackingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     const Text(
                       'Live Tracking',
                       style: TextStyle(
-                        fontSize: 17,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         fontFamily: 'Inter',
                       ),
                     ),
                     if (_isRouteLoading) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       const Text(
                         '• Calculating route...',
                         style: TextStyle(
@@ -602,7 +698,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xF078350F), // Dark amber
+        color: const Color(0xF078350F),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFF59E0B)),
       ),
@@ -630,7 +726,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xF0991B1B), // Dark amber red
+        color: const Color(0xF0991B1B),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFEF4444)),
         boxShadow: [
@@ -676,7 +772,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
   }
 
-  // ─── Layer 3: Compact Bottom Navigation Panel (~25% Screen Height) ────────
+  // ─── Layer 3: Compact Bottom Panel (Mobile / Portrait) ────────────────────
 
   Widget _buildCompactBottomPanel() {
     final isDelivered = _status == ParcelStatus.delivered;
@@ -696,7 +792,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xF00F172A), // Dark translucent charcoal
+        color: const Color(0xF00F172A),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         border: Border.all(color: const Color(0xFF334155)),
         boxShadow: [
@@ -728,33 +824,40 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  isDelivered
-                      ? 'DELIVERY COMPLETED'
-                      : isReached
-                          ? 'DESTINATION REACHED'
-                          : 'TRACKING ACTIVE',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                    color: isDelivered
-                        ? const Color(0xFF10B981)
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    isDelivered
+                        ? 'DELIVERY COMPLETED'
                         : isReached
-                            ? const Color(0xFFF59E0B)
-                            : const Color(0xFF3B82F6),
-                    fontFamily: 'Inter',
+                            ? 'DESTINATION REACHED'
+                            : 'TRACKING ACTIVE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                      color: isDelivered
+                          ? const Color(0xFF10B981)
+                          : isReached
+                              ? const Color(0xFFF59E0B)
+                              : const Color(0xFF3B82F6),
+                      fontFamily: 'Inter',
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  '$_sourceName → $_destinationName',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    fontFamily: 'Inter',
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '$_sourceName → $_destinationName',
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      fontFamily: 'Inter',
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -764,12 +867,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
             const Divider(color: Color(0xFF334155), height: 1),
             const SizedBox(height: 10),
 
-            // Compact Horizontal Progress Timeline
             _buildHorizontalProgressTimeline(isReached: isReached, isDelivered: isDelivered),
 
             const SizedBox(height: 10),
 
-            // GPS Coordinates & Distance/Duration Line
+            // GPS Coordinates & Distance Line
             Row(
               children: [
                 Expanded(
@@ -784,13 +886,16 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   ),
                 ),
                 if (distText != null && !isDelivered) ...[
-                  Text(
-                    _roadDurationText != null ? '$distText • $_roadDurationText' : distText,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF60A5FA),
-                      fontFamily: 'Inter',
+                  Flexible(
+                    child: Text(
+                      _roadDurationText != null ? '$distText • $_roadDurationText' : distText,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF60A5FA),
+                        fontFamily: 'Inter',
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -799,7 +904,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
             const SizedBox(height: 12),
 
-            // Action Button Section
             _buildCompactActionButton(isReached: isReached, isDelivered: isDelivered),
           ],
         ),
@@ -807,18 +911,178 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
   }
 
+  // ─── Side Panel (Landscape / Tablet / Desktop) ────────────────────────────
+
+  Widget _buildSidePanelContent() {
+    final isDelivered = _status == ParcelStatus.delivered;
+    final isReached = _hasReachedDestination;
+
+    final coordsText = _currentLocation != null
+        ? '${_currentLocation!.latitude.toStringAsFixed(4)}, ${_currentLocation!.longitude.toStringAsFixed(4)}'
+        : 'Acquiring GPS...';
+
+    final distText = _roadDistanceText ??
+        (_distanceToDestinationMeters != null
+            ? (_distanceToDestinationMeters! >= 1000
+                ? 'Approx. ${(_distanceToDestinationMeters! / 1000).toStringAsFixed(1)} km'
+                : 'Approx. ${_distanceToDestinationMeters!.round()} m')
+            : null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: isDelivered
+                    ? const Color(0xFF10B981)
+                    : isReached
+                        ? const Color(0xFFF59E0B)
+                        : const Color(0xFF3B82F6),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              isDelivered
+                  ? 'DELIVERY COMPLETED'
+                  : isReached
+                      ? 'DESTINATION REACHED'
+                      : 'TRACKING ACTIVE',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                color: isDelivered
+                    ? const Color(0xFF10B981)
+                    : isReached
+                        ? const Color(0xFFF59E0B)
+                        : const Color(0xFF3B82F6),
+                fontFamily: 'Inter',
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+        Text(
+          'Parcel #$_parcelId',
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            fontFamily: 'Inter',
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$_sourceName → $_destinationName',
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF60A5FA),
+            fontFamily: 'Inter',
+          ),
+        ),
+
+        const SizedBox(height: 16),
+        const Divider(color: Color(0xFF334155)),
+        const SizedBox(height: 16),
+
+        _buildHorizontalProgressTimeline(isReached: isReached, isDelivered: isDelivered),
+
+        const SizedBox(height: 20),
+        const Text(
+          'LIVE METRICS',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+            color: Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E293B),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF334155)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('GPS Fix', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      coordsText,
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Last Updated', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                  Text(_timeAgoText, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                ],
+              ),
+              if (distText != null && !isDelivered) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Road Distance', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        distText,
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF60A5FA)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+        _buildCompactActionButton(isReached: isReached, isDelivered: isDelivered),
+      ],
+    );
+  }
+
   Widget _buildHorizontalProgressTimeline({
     required bool isReached,
     required bool isDelivered,
   }) {
-    return Row(
-      children: [
-        _horizontalNode('Pickup', true, false),
-        _horizontalConnector(true),
-        _horizontalNode('In Transit', !isReached && !isDelivered, isReached || isDelivered),
-        _horizontalConnector(isReached || isDelivered),
-        _horizontalNode('Delivery', isReached && !isDelivered, isDelivered),
-      ],
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _horizontalNode('Pickup', true, false),
+          _horizontalConnector(true),
+          _horizontalNode('In Transit', !isReached && !isDelivered, isReached || isDelivered),
+          _horizontalConnector(isReached || isDelivered),
+          _horizontalNode('Delivery', isReached && !isDelivered, isDelivered),
+        ],
+      ),
     );
   }
 
@@ -874,12 +1138,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _horizontalConnector(bool isDone) {
-    return Expanded(
-      child: Container(
-        height: 1.5,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        color: isDone ? const Color(0xFF10B981) : const Color(0xFF334155),
-      ),
+    return Container(
+      width: 24,
+      height: 1.5,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      color: isDone ? const Color(0xFF10B981) : const Color(0xFF334155),
     );
   }
 

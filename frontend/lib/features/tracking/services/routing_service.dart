@@ -1,13 +1,14 @@
 /// Routing Service — OSRM Open Source Routing Engine & Dynamic Road Alignment
 ///
 /// Fetches actual road-following route geometry between ANY dynamic start and destination coordinates.
-/// Uses OSRM public driving API (GeoJSON format with `alternatives=true`). 100% free, zero Google Maps API keys.
-/// Includes high-performance local road-snapping (snapPointToRoute) for GPS path alignment.
+/// Uses `package:http` for 100% cross-platform compatibility across Android, iOS, and Flutter Web.
+/// Includes web logging, CORS fallback support, and high-performance local road snapping.
 library;
 
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 class RouteResult {
@@ -25,9 +26,6 @@ class RouteResult {
 }
 
 class RoutingService {
-  static final HttpClient _httpClient = HttpClient()
-    ..connectionTimeout = const Duration(seconds: 10);
-
   /// Fetches actual road-following geometry and alternatives from OSRM public API.
   /// Start & Destination points format: [longitude, latitude] in OSRM URL.
   Future<RouteResult?> getRoute({
@@ -42,16 +40,47 @@ class RoutingService {
       return null;
     }
 
-    final url =
+    final rawUrl =
         'https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson&alternatives=true';
 
+    if (kIsWeb && kDebugMode) {
+      debugPrint('WEB ROUTE REQUEST: $rawUrl');
+    }
+
+    // Try direct OSRM endpoint first
+    var result = await _executeRouteFetch(rawUrl);
+    if (result != null) return result;
+
+    // Fallback for Web CORS restriction if browser preflight fails
+    if (kIsWeb) {
+      final corsProxyUrl =
+          'https://corsproxy.io/?${Uri.encodeComponent(rawUrl)}';
+      if (kDebugMode) {
+        debugPrint('WEB ROUTE CORS FALLBACK REQUEST: $corsProxyUrl');
+      }
+      result = await _executeRouteFetch(corsProxyUrl);
+    }
+
+    return result;
+  }
+
+  Future<RouteResult?> _executeRouteFetch(String urlString) async {
     try {
-      final request = await _httpClient.getUrl(Uri.parse(url));
-      final response = await request.close().timeout(const Duration(seconds: 10));
+      final uri = Uri.parse(urlString);
+      final response = await http.get(
+        uri,
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'TravgoApp/1.0',
+        },
+      ).timeout(const Duration(seconds: 12));
+
+      if (kIsWeb && kDebugMode) {
+        debugPrint('WEB ROUTE RESPONSE: ${response.statusCode}');
+      }
 
       if (response.statusCode == 200) {
-        final bodyText = await response.transform(utf8.decoder).join();
-        final jsonMap = jsonDecode(bodyText) as Map<String, dynamic>;
+        final jsonMap = jsonDecode(response.body) as Map<String, dynamic>;
 
         if (jsonMap['code'] == 'Ok' &&
             jsonMap['routes'] is List &&
@@ -103,8 +132,11 @@ class RoutingService {
           );
         }
       }
-    } catch (_) {
-      // Graceful fallback for network offline/timeout without crashing
+    } catch (e, stackTrace) {
+      if (kIsWeb && kDebugMode) {
+        debugPrint('WEB ROUTE ERROR: $e');
+        debugPrint(stackTrace.toString());
+      }
     }
     return null;
   }

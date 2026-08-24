@@ -1,6 +1,6 @@
-/// Pickup OTP Screen — Phase 1 (Premium Mobile OTP UI)
+/// Pickup OTP Screen — Fully Responsive Premium Mobile OTP UI
 ///
-/// Mobile-first verification card UI. 4 separate PIN boxes, auto-focus, backspace support.
+/// Mobile-first verification card UI. 4 separate PIN boxes with dynamic responsive sizing, auto-focus, backspace support.
 /// Preserves 100% of underlying OtpService & OtpModel verification logic.
 ///
 /// Mock OTP: 4827
@@ -15,11 +15,6 @@ import '../models/otp_model.dart';
 import '../services/otp_service.dart';
 import '../widgets/travgo_theme.dart';
 import '../../tracking/screens/tracking_screen.dart';
-
-
-
-
-
 
 class PickupOtpScreen extends StatefulWidget {
   const PickupOtpScreen({super.key});
@@ -119,7 +114,6 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
     if (_verified) _countdownTimer?.cancel();
   }
 
-
   // ─── UI Helpers ──────────────────────────────────────────────────────────
 
   Color get _errorColor {
@@ -176,7 +170,8 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Container(
               constraints: const BoxConstraints(maxWidth: 420),
               decoration: BoxDecoration(
@@ -191,30 +186,30 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
                   ),
                 ],
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (!_verified) ...[
                     _buildHeader(),
-                    const SizedBox(height: 20),
-                    _buildParcelContextCard(),
-                    const SizedBox(height: 20),
-                    _buildOtpBoxes(),
                     const SizedBox(height: 16),
+                    _buildParcelContextCard(),
+                    const SizedBox(height: 16),
+                    _buildOtpBoxes(),
+                    const SizedBox(height: 14),
                     _buildTimerRow(),
                     if (_lastResult != null && _lastResult != OtpVerifyResult.success) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       _buildErrorContainer(),
                     ],
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 18),
                     TravgoPrimaryButton(
                       label: 'Verify Pickup',
                       onPressed: (_isExpired || _enteredOtp.length < 4) ? null : _verify,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     _buildResendRow(),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildHelpButton(),
                   ] else ...[
                     _buildSuccessState(),
@@ -234,8 +229,8 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
     return Column(
       children: [
         Container(
-          width: 64,
-          height: 64,
+          width: 52,
+          height: 52,
           decoration: const BoxDecoration(
             color: TravgoColors.primaryBg,
             shape: BoxShape.circle,
@@ -244,36 +239,36 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
             alignment: Alignment.center,
             children: [
               Icon(Icons.inventory_2_outlined,
-                  color: TravgoColors.primary, size: 30),
+                  color: TravgoColors.primary, size: 24),
               Positioned(
-                right: 14,
-                bottom: 14,
+                right: 10,
+                bottom: 10,
                 child: CircleAvatar(
-                  radius: 8,
+                  radius: 6,
                   backgroundColor: TravgoColors.primary,
-                  child: Icon(Icons.check, color: Colors.white, size: 10),
+                  child: Icon(Icons.check, color: Colors.white, size: 8),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         const Text(
           'Verify Pickup',
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 19,
             fontWeight: FontWeight.w700,
             color: TravgoColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         const Text(
           'Enter the 4-digit OTP shared by the sender to confirm parcel pickup.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             color: TravgoColors.textSecondary,
-            height: 1.4,
+            height: 1.35,
           ),
         ),
       ],
@@ -283,25 +278,25 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
   Widget _buildParcelContextCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: TravgoColors.scaffoldBg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: TravgoColors.border),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(color: TravgoColors.border),
             ),
             child: const Icon(Icons.local_shipping_outlined,
-                color: TravgoColors.primary, size: 20),
+                color: TravgoColors.primary, size: 18),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,22 +304,17 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
                 Text(
                   'Parcel #${_otpModel.parcelId}',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: TravgoColors.textPrimary,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                const Row(
-                  children: [
-                    Text('Coimbatore', style: TravgoText.caption),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(Icons.arrow_forward_rounded,
-                          size: 12, color: TravgoColors.textSecondary),
-                    ),
-                    Text('Chennai', style: TravgoText.caption),
-                  ],
+                const Text(
+                  'Coimbatore → Chennai',
+                  style: TextStyle(fontSize: 11, color: TravgoColors.textSecondary),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -340,81 +330,86 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
         const Text(
           'Enter Pickup OTP',
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             color: TravgoColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: List.generate(4, (index) => _buildSingleOtpBox(index)),
+          children: List.generate(
+            4,
+            (index) => Expanded(
+              child: Container(
+                height: 48,
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                child: _buildSingleOtpBox(index),
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildSingleOtpBox(int index) {
-    return SizedBox(
-      width: 58,
-      height: 64,
-      child: KeyboardListener(
-        focusNode: FocusNode(),
-        onKeyEvent: (event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.backspace &&
-              _controllers[index].text.isEmpty &&
-              index > 0) {
-            _focusNodes[index - 1].requestFocus();
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      onKeyEvent: (event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.backspace &&
+            _controllers[index].text.isEmpty &&
+            index > 0) {
+          _focusNodes[index - 1].requestFocus();
+        }
+      },
+      child: TextField(
+        controller: _controllers[index],
+        focusNode: _focusNodes[index],
+        keyboardType: TextInputType.number,
+        textAlign: TextAlign.center,
+        maxLength: 1,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: TravgoColors.textPrimary,
+        ),
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: InputDecoration(
+          counterText: '',
+          filled: true,
+          fillColor: _controllers[index].text.isNotEmpty
+              ? TravgoColors.primaryBg
+              : TravgoColors.inputBg,
+          contentPadding: EdgeInsets.zero,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: _controllers[index].text.isNotEmpty
+                  ? TravgoColors.primary
+                  : TravgoColors.border,
+              width: 1.5,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: TravgoColors.primary,
+              width: 2,
+            ),
+          ),
+        ),
+        onChanged: (value) {
+          setState(() {});
+          if (value.isNotEmpty) {
+            if (index < 3) {
+              _focusNodes[index + 1].requestFocus();
+            } else {
+              _focusNodes[index].unfocus();
+            }
           }
         },
-        child: TextField(
-          controller: _controllers[index],
-          focusNode: _focusNodes[index],
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center,
-          maxLength: 1,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
-            color: TravgoColors.textPrimary,
-          ),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: InputDecoration(
-            counterText: '',
-            filled: true,
-            fillColor: _controllers[index].text.isNotEmpty
-                ? TravgoColors.primaryBg
-                : TravgoColors.inputBg,
-            contentPadding: EdgeInsets.zero,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color: _controllers[index].text.isNotEmpty
-                    ? TravgoColors.primary
-                    : TravgoColors.border,
-                width: 1.5,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: TravgoColors.primary,
-                width: 2,
-              ),
-            ),
-          ),
-          onChanged: (value) {
-            setState(() {}); // Re-evaluate button enable state
-            if (value.isNotEmpty) {
-              if (index < 3) {
-                _focusNodes[index + 1].requestFocus();
-              } else {
-                _focusNodes[index].unfocus();
-              }
-            }
-          },
-        ),
       ),
     );
   }
@@ -426,18 +421,18 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
       children: [
         Icon(
           _isExpired ? Icons.timer_off_outlined : Icons.timer_outlined,
-          size: 15,
+          size: 14,
           color: _isExpired
               ? TravgoColors.error
               : isWarning
                   ? TravgoColors.warning
                   : TravgoColors.textSecondary,
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 5),
         Text(
           _isExpired ? 'OTP expired' : 'Expires in $_timerLabel',
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
             color: _isExpired
                 ? TravgoColors.error
@@ -453,7 +448,7 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
   Widget _buildErrorContainer() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: _errorBg,
         borderRadius: BorderRadius.circular(12),
@@ -461,8 +456,8 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded, color: _errorColor, size: 20),
-          const SizedBox(width: 10),
+          Icon(Icons.warning_amber_rounded, color: _errorColor, size: 18),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,17 +465,17 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
                 Text(
                   _errorTitle,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: _errorColor,
                   ),
                 ),
                 if (_errorSubtitle.isNotEmpty) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
                     _errorSubtitle,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: _errorColor.withValues(alpha: 0.85),
                     ),
                   ),
@@ -512,7 +507,7 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
           child: const Text(
             'Ask the sender to resend',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: TravgoColors.primary,
             ),
@@ -531,7 +526,7 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
       ),
       child: const Text(
         'Need help?',
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -541,38 +536,38 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 64,
-          height: 64,
+          width: 56,
+          height: 56,
           decoration: const BoxDecoration(
             color: TravgoColors.successBg,
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.check_rounded,
-              color: TravgoColors.success, size: 36),
+              color: TravgoColors.success, size: 32),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         const Text(
           'Pickup Verified',
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             color: TravgoColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         const Text(
           'The parcel has been successfully handed over to the traveller.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             color: TravgoColors.textSecondary,
             height: 1.4,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: TravgoColors.scaffoldBg,
             borderRadius: BorderRadius.circular(14),
@@ -586,7 +581,7 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         TravgoPrimaryButton(
           label: 'Continue to Tracking',
           icon: Icons.map_outlined,
@@ -598,7 +593,6 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
             );
           },
         ),
-
       ],
     );
   }
