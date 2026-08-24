@@ -63,4 +63,37 @@ class SenderNotification {
       travellerName: travellerName ?? this.travellerName,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'message': message,
+      'timestamp': timestamp.toIso8601String(),
+      'type': type.name,
+      'isRead': isRead,
+      'requestId': requestId,
+      'route': route,
+      'travellerName': travellerName,
+    };
+  }
+
+  factory SenderNotification.fromJson(Map<String, dynamic> json) {
+    return SenderNotification(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      message: json['message'] as String? ?? '',
+      timestamp: json['timestamp'] != null
+          ? DateTime.tryParse(json['timestamp'] as String) ?? DateTime.now()
+          : DateTime.now(),
+      type: SenderNotificationType.values.firstWhere(
+        (t) => t.name == json['type'],
+        orElse: () => SenderNotificationType.general,
+      ),
+      isRead: json['isRead'] as bool? ?? false,
+      requestId: json['requestId'] as String?,
+      route: json['route'] as String?,
+      travellerName: json['travellerName'] as String?,
+    );
+  }
 }
