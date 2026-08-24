@@ -9,9 +9,12 @@ library;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:latlong2/latlong.dart';
+import '../../tracking/services/location_service.dart';
 import '../models/otp_model.dart';
 import '../services/otp_service.dart';
 import '../widgets/travgo_theme.dart';
+
 
 class DeliveryOtpScreen extends StatefulWidget {
   const DeliveryOtpScreen({super.key});
@@ -86,7 +89,7 @@ class _DeliveryOtpScreenState extends State<DeliveryOtpScreen> {
 
   // ─── Verification ─────────────────────────────────────────────────────────
 
-  void _verify() {
+  Future<void> _verify() async {
     FocusScope.of(context).unfocus();
     final entered = _enteredOtp;
     if (entered.length < 4) {
@@ -96,12 +99,21 @@ class _DeliveryOtpScreenState extends State<DeliveryOtpScreen> {
       return;
     }
     final result = _service.verifyDeliveryOtp(entered);
+    if (result == OtpVerifyResult.success) {
+      try {
+        final pos = await LocationService().getCurrentLocation();
+        _service.deliveryLocation = LatLng(pos.latitude, pos.longitude);
+      } catch (_) {
+        _service.deliveryLocation = const LatLng(13.0827, 80.2707);
+      }
+    }
     setState(() {
       _lastResult = result;
       _verified = result == OtpVerifyResult.success;
     });
     if (_verified) _countdownTimer?.cancel();
   }
+
 
   // ─── UI Helpers ──────────────────────────────────────────────────────────
 

@@ -1,7 +1,8 @@
-/// Live Tracking Map Screen — Full-Screen OpenStreetMap
+/// Live Tracking Map Screen — Full-Screen OpenStreetMap with Actual Travelled Path
 ///
-/// Full-screen live GPS map with OpenStreetMap, accuracy circle, recenter button,
-/// live coordinates bottom panel, and stream management.
+/// Full-screen live GPS map displaying Pickup (📦), Current Traveller (🔵),
+/// Destination (📍), and Delivered (✓) markers, with solid travelled polyline,
+/// remaining route line, accuracy circle, and recenter controls.
 library;
 
 import 'dart:async';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import '../../otp/services/otp_service.dart';
 import '../../otp/widgets/travgo_theme.dart';
 import '../services/location_service.dart';
 
@@ -18,6 +20,9 @@ class LiveTrackingMapScreen extends StatefulWidget {
     this.initialLocation,
     this.sourceLocation = const LatLng(11.0168, 76.9558),
     this.destinationLocation = const LatLng(13.0827, 80.2707),
+    this.pickupLocation,
+    this.deliveryLocation,
+    this.locationHistory = const [],
     this.sourceName = 'Coimbatore',
     this.destinationName = 'Chennai',
     this.parcelId = 'TRV1024',
@@ -26,6 +31,9 @@ class LiveTrackingMapScreen extends StatefulWidget {
   final LatLng? initialLocation;
   final LatLng sourceLocation;
   final LatLng destinationLocation;
+  final LatLng? pickupLocation;
+  final LatLng? deliveryLocation;
+  final List<LatLng> locationHistory;
   final String sourceName;
   final String destinationName;
   final String parcelId;
@@ -36,9 +44,14 @@ class LiveTrackingMapScreen extends StatefulWidget {
 
 class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
   final LocationService _locationService = LocationService();
+  final OtpService _otpService = OtpService.instance;
   final MapController _mapController = MapController();
 
   LatLng? _currentLocation;
+  LatLng? _pickupLocation;
+  LatLng? _deliveryLocation;
+  final List<LatLng> _locationHistory = [];
+
   double? _accuracy;
   DateTime? _lastUpdated;
 
@@ -55,8 +68,21 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
   @override
   void initState() {
     super.initState();
+    _pickupLocation = widget.pickupLocation ?? _otpService.pickupLocation;
+    _deliveryLocation = widget.deliveryLocation ?? _otpService.deliveryLocation;
+    if (widget.locationHistory.isNotEmpty) {
+      _locationHistory.addAll(widget.locationHistory);
+    } else if (_otpService.locationHistory.isNotEmpty) {
+      _locationHistory.addAll(_otpService.locationHistory);
+    }
+
     _currentLocation = widget.initialLocation;
-    _initGpsStream();
+    if (_otpService.parcelStatus.name != 'delivered') {
+      _initGpsStream();
+    } else {
+      _isLoadingGps = false;
+      _isTrackingActive = false;
+    }
     _startTimerTicker();
   }
 
@@ -135,8 +161,13 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
   }
 
   void _updateLocationFromPosition(Position pos) {
+    final pt = LatLng(pos.latitude, pos.longitude);
     setState(() {
-      _currentLocation = LatLng(pos.latitude, pos.longitude);
+      _currentLocation = pt;
+      _pickupLocation ??= pt;
+      if (_locationHistory.isEmpty || _locationHistory.last != pt) {
+        _locationHistory.add(pt);
+      }
       _accuracy = pos.accuracy;
       _lastUpdated = DateTime.now();
       _timeAgoText = 'Just now';
@@ -147,30 +178,61 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
   }
 
   void _recenterMap() {
-    if (_currentLocation != null) {
-      setState(() {
-        _isUserPanning = false;
-      });
-      _mapController.move(_currentLocation!, 15.0);
-    }
+    final target = _currentLocation ?? _pickupLocation ?? widget.sourceLocation;
+    setState(() {
+      _isUserPanning = false;
+    });
+    _mapController.move(target, 15.0);
   }
 
   // ─── Map Data ─────────────────────────────────────────────────────────────
 
-  List<LatLng> get _polylinePoints {
-    final points = <LatLng>[widget.sourceLocation];
-    if (_currentLocation != null) points.add(_currentLocation!);
-    points.add(widget.destinationLocation);
+  List<LatLng> get _travelledPathPoints {
+    final points = <LatLng>[];
+
+    final start = _pickupLocation ?? widget.sourceLocation;
+    points.add(start);
+
+    for (final pt in _locationHistory) {
+      if (points.isEmpty || points.last != pt) {
+        points.add(pt);
+      }
+    }
+
+    final current = _deliveryLocation ?? _currentLocation;
+    if (current != null) {
+      if (points.isEmpty || points.last != current) {
+        points.add(current);
+      }
+    }
+
+    return points;
+  }
+
+  List<LatLng> get _remainingRoutePoints {
+    final points = <LatLng>[];
+    if (_deliveryLocation != null) return points;
+
+    final current = _currentLocation ?? _pickupLocation ?? widget.sourceLocation;
+    points.add(current);
+
+    if (points.isEmpty || points.last != widget.destinationLocation) {
+      points.add(widget.destinationLocation);
+    }
+
     return points;
   }
 
   List<Marker> get _markers {
-    final markers = <Marker>[
-      // Source Marker (Orange)
+    final markers = <Marker>[];
+
+    // 1. Pickup Marker (Fixed Orange 📦)
+    final pickupPt = _pickupLocation ?? widget.sourceLocation;
+    markers.add(
       Marker(
-        point: widget.sourceLocation,
-        width: 80,
-        height: 52,
+        point: pickupPt,
+        width: 85,
+        height: 54,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -187,14 +249,21 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
                   ),
                 ],
               ),
-              child: Text(
-                widget.sourceName,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: TravgoColors.warning,
-                ),
-                overflow: TextOverflow.ellipsis,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('📦', style: TextStyle(fontSize: 10)),
+                  const SizedBox(width: 3),
+                  Text(
+                    _pickupLocation != null ? 'Pickup' : widget.sourceName,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: TravgoColors.warning,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
             const Icon(
@@ -205,54 +274,116 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
           ],
         ),
       ),
+    );
 
-      // Destination Marker (Green)
-      Marker(
-        point: widget.destinationLocation,
-        width: 80,
-        height: 52,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: TravgoColors.success),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                  ),
-                ],
-              ),
-              child: Text(
-                widget.destinationName,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: TravgoColors.success,
+    // 2. Destination Marker (Fixed Green 📍 — while not delivered)
+    if (_deliveryLocation == null) {
+      markers.add(
+        Marker(
+          point: widget.destinationLocation,
+          width: 90,
+          height: 54,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: TravgoColors.success),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                    ),
+                  ],
                 ),
-                overflow: TextOverflow.ellipsis,
+                child: Text(
+                  widget.destinationName,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: TravgoColors.success,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            const Icon(
-              Icons.location_on_rounded,
-              color: TravgoColors.success,
-              size: 24,
-            ),
-          ],
+              const Icon(
+                Icons.location_on_rounded,
+                color: TravgoColors.success,
+                size: 24,
+              ),
+            ],
+          ),
         ),
-      ),
-    ];
+      );
+    }
 
-    // Traveller Marker (Primary Blue)
-    if (_currentLocation != null) {
+    // 3. Delivered Marker (Fixed Green Check ✓ — when delivery OTP verified)
+    if (_deliveryLocation != null) {
+      markers.add(
+        Marker(
+          point: _deliveryLocation!,
+          width: 90,
+          height: 54,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: TravgoColors.success,
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TravgoColors.success.withValues(alpha: 0.3),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: Colors.white, size: 12),
+                    SizedBox(width: 3),
+                    Text(
+                      'Delivered',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 2),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: TravgoColors.success,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 4. Current Traveller Marker (ONLY ONE active blue 🔵 marker!)
+    if (_currentLocation != null && _deliveryLocation == null) {
       markers.add(
         Marker(
           point: _currentLocation!,
-          width: 80,
+          width: 85,
           height: 54,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -270,7 +401,7 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
                   ],
                 ),
                 child: const Text(
-                  'Traveller',
+                  '🔵 Traveller',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -280,7 +411,7 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
               ),
               const SizedBox(height: 2),
               Container(
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: TravgoColors.primary,
                   shape: BoxShape.circle,
@@ -311,7 +442,9 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final initialTarget = _currentLocation ?? widget.sourceLocation;
+    final initialTarget = _currentLocation ?? _pickupLocation ?? widget.sourceLocation;
+    final travelled = _travelledPathPoints;
+    final remaining = _remainingRoutePoints;
 
     return Scaffold(
       backgroundColor: TravgoColors.scaffoldBg,
@@ -341,16 +474,23 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
               // Polyline
               PolylineLayer(
                 polylines: [
-                  Polyline(
-                    points: _polylinePoints,
-                    color: TravgoColors.primary,
-                    strokeWidth: 4.0,
-                  ),
+                  if (travelled.length >= 2)
+                    Polyline(
+                      points: travelled,
+                      color: TravgoColors.primary,
+                      strokeWidth: 4.5,
+                    ),
+                  if (remaining.length >= 2)
+                    Polyline(
+                      points: remaining,
+                      color: TravgoColors.primary.withValues(alpha: 0.35),
+                      strokeWidth: 3.0,
+                    ),
                 ],
               ),
 
               // Accuracy circle around current GPS position
-              if (_currentLocation != null && _accuracy != null)
+              if (_currentLocation != null && _accuracy != null && _deliveryLocation == null)
                 CircleLayer(
                   circles: [
                     CircleMarker(
@@ -406,9 +546,12 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
   }
 
   Widget _buildLiveLocationPanel() {
+    final isDelivered = _deliveryLocation != null;
     final coordsText = _currentLocation != null
         ? '${_currentLocation!.latitude.toStringAsFixed(4)}, ${_currentLocation!.longitude.toStringAsFixed(4)}'
-        : 'Acquiring GPS signal...';
+        : _pickupLocation != null
+            ? '${_pickupLocation!.latitude.toStringAsFixed(4)}, ${_pickupLocation!.longitude.toStringAsFixed(4)}'
+            : 'Acquiring GPS signal...';
 
     final accuracyText = _accuracy != null
         ? '±${_accuracy!.round()} m'
@@ -439,29 +582,35 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
                 width: 10,
                 height: 10,
                 decoration: BoxDecoration(
-                  color: _isTrackingActive
+                  color: isDelivered
                       ? TravgoColors.success
-                      : _isLoadingGps
-                          ? TravgoColors.warning
-                          : TravgoColors.error,
+                      : _isTrackingActive
+                          ? TravgoColors.primary
+                          : _isLoadingGps
+                              ? TravgoColors.warning
+                              : TravgoColors.error,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
-                _isTrackingActive
-                    ? 'LIVE TRACKING'
-                    : _isLoadingGps
-                        ? 'GETTING LOCATION...'
-                        : 'TRACKING PAUSED',
+                isDelivered
+                    ? 'DELIVERY COMPLETED'
+                    : _isTrackingActive
+                        ? 'LIVE TRACKING'
+                        : _isLoadingGps
+                            ? 'GETTING LOCATION...'
+                            : 'TRACKING PAUSED',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: _isTrackingActive
+                  color: isDelivered
                       ? TravgoColors.success
-                      : _isLoadingGps
-                          ? TravgoColors.warning
-                          : TravgoColors.error,
+                      : _isTrackingActive
+                          ? TravgoColors.primary
+                          : _isLoadingGps
+                              ? TravgoColors.warning
+                              : TravgoColors.error,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -498,16 +647,12 @@ class _LiveTrackingMapScreenState extends State<LiveTrackingMapScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Traveller Coordinates',
+                    Text(isDelivered ? 'Delivery Handoff Location' : 'Traveller Coordinates',
                         style: TravgoText.caption),
                     const SizedBox(height: 2),
                     Text(
                       coordsText,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: TravgoColors.textPrimary,
-                      ),
+                      style: TravgoText.coordinates,
                     ),
                   ],
                 ),

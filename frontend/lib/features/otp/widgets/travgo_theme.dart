@@ -61,13 +61,13 @@ class TravgoText {
 
   static const TextStyle screenTitle = TextStyle(
     fontSize: 22,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.bold,
     color: TravgoColors.textPrimary,
     letterSpacing: -0.3,
   );
 
   static const TextStyle sectionTitle = TextStyle(
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: FontWeight.w600,
     color: TravgoColors.textPrimary,
   );
@@ -85,8 +85,14 @@ class TravgoText {
     color: TravgoColors.textPrimary,
   );
 
+  static const TextStyle coordinates = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    color: TravgoColors.textPrimary,
+  );
+
   static const TextStyle caption = TextStyle(
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w400,
     color: TravgoColors.textSecondary,
   );
@@ -98,6 +104,7 @@ class TravgoText {
     letterSpacing: 0.2,
   );
 }
+
 
 // ─── Shared Widgets ───────────────────────────────────────────────────────────
 
@@ -282,10 +289,16 @@ class ParcelStatusUi {
     bgColor: TravgoColors.primaryBg,
     dotColor: TravgoColors.primary,
   );
+  static const destinationReached = ParcelStatusUi(
+    label: 'DESTINATION REACHED',
+    bgColor: TravgoColors.successBg,
+    dotColor: TravgoColors.success,
+  );
   static const delivered = ParcelStatusUi(
     label: 'DELIVERED',
     bgColor: TravgoColors.successBg,
     dotColor: TravgoColors.success,
   );
+
 
 }

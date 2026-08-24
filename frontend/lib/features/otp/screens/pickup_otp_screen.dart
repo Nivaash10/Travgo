@@ -9,10 +9,13 @@ library;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:latlong2/latlong.dart';
+import '../../tracking/services/location_service.dart';
 import '../models/otp_model.dart';
 import '../services/otp_service.dart';
 import '../widgets/travgo_theme.dart';
 import '../../tracking/screens/tracking_screen.dart';
+
 
 
 
@@ -91,7 +94,7 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
 
   // ─── Verification ─────────────────────────────────────────────────────────
 
-  void _verify() {
+  Future<void> _verify() async {
     FocusScope.of(context).unfocus();
     final entered = _enteredOtp;
     if (entered.length < 4) {
@@ -101,12 +104,21 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
       return;
     }
     final result = _service.verifyPickupOtp(entered);
+    if (result == OtpVerifyResult.success) {
+      try {
+        final pos = await LocationService().getCurrentLocation();
+        _service.pickupLocation = LatLng(pos.latitude, pos.longitude);
+      } catch (_) {
+        _service.pickupLocation = const LatLng(11.0168, 76.9558);
+      }
+    }
     setState(() {
       _lastResult = result;
       _verified = result == OtpVerifyResult.success;
     });
     if (_verified) _countdownTimer?.cancel();
   }
+
 
   // ─── UI Helpers ──────────────────────────────────────────────────────────
 

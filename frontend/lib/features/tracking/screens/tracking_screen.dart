@@ -1,23 +1,42 @@
-/// Complete Tracking Screen — Mobile-First Redesign & Refresh Fix
+/// Professional Satellite Live Tracking Screen — Dynamic Road-Aligned Navigation UI
 ///
-/// Mobile-first live tracking screen with real GPS refresh, OpenStreetMap,
-/// compact vertical timeline, location details, and Delivery OTP transition.
-/// Uses standard StatefulWidget + LocationService. Zero state-management packages added.
+/// Hero Satellite map UI using `flutter_map` + Esri World Imagery & OSRM Road Routing.
+/// Supports ANY dynamic source and destination coordinate pair via [ParcelTrip] or direct arguments.
+/// Features dark translucent overlays, compact bottom sheet (~25% screen height max),
+/// OSRM road-following route calculation (with primary & alternative routes),
+/// real device GPS updates with accuracy filtering (<=35m) and local road-snapping,
+/// route deviation detection, and Delivery OTP handover.
 library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../../otp/screens/delivery_otp_screen.dart';
 import '../../otp/services/otp_service.dart' hide ParcelStatus;
 import '../../otp/widgets/travgo_theme.dart';
 import '../models/tracking_model.dart';
 import '../services/location_service.dart';
+import '../services/routing_service.dart';
 import '../widgets/tracking_map.dart';
-import 'live_tracking_map_screen.dart';
 
 class TrackingScreen extends StatefulWidget {
-  const TrackingScreen({super.key});
+  const TrackingScreen({
+    super.key,
+    this.trip,
+    this.parcelId = 'TRV1024',
+    this.sourceName = 'Coimbatore',
+    this.sourceLocation = const LatLng(11.0168, 76.9558),
+    this.destinationName = 'Chennai',
+    this.destinationLocation = const LatLng(13.0827, 80.2707),
+  });
+
+  final ParcelTrip? trip;
+  final String parcelId;
+  final String sourceName;
+  final LatLng sourceLocation;
+  final String destinationName;
+  final LatLng destinationLocation;
 
   @override
   State<TrackingScreen> createState() => _TrackingScreenState();
@@ -26,18 +45,38 @@ class TrackingScreen extends StatefulWidget {
 class _TrackingScreenState extends State<TrackingScreen> {
   final LocationService _locationService = LocationService();
   final OtpService _otpService = OtpService.instance;
+  final RoutingService _routingService = RoutingService();
 
-  // Prototype route coordinates
-  final LatLng _sourceLocation = const LatLng(11.0168, 76.9558); // Coimbatore
-  final LatLng _destinationLocation = const LatLng(13.0827, 80.2707); // Chennai
+  late String _parcelId;
+  late LatLng _sourceLocation;
+  late LatLng _destinationLocation;
+  late String _sourceName;
+  late String _destinationName;
 
+  LatLng? _pickupLocation;
   LatLng? _currentLocation;
+  LatLng? _deliveryLocation;
+
+  /// Source of truth: raw unaltered GPS coordinates from device
+  final List<LatLng> _rawGpsHistory = [];
+
+  /// Road-snapped GPS coordinates displayed on the map
+  final List<LatLng> _locationHistory = [];
+  List<LatLng> _plannedRoute = [];
+  List<List<LatLng>> _alternativeRoutes = [];
+
+  String? _roadDistanceText;
+  String? _roadDurationText;
+  String? _routingError;
+
   ParcelStatus _status = ParcelStatus.pickedUp;
   DateTime? _lastUpdated;
 
-  bool _isLoadingGps = false;
   bool _isRefreshing = false;
-  String? _gpsErrorMessage;
+  bool _isRouteLoading = false;
+  bool _isOffRoute = false;
+  bool _isFollowingTraveller = true;
+  bool _simulateDestinationArrival = false;
   Timer? _timerTicker;
   String _timeAgoText = 'Just now';
 
@@ -46,9 +85,26 @@ class _TrackingScreenState extends State<TrackingScreen> {
   @override
   void initState() {
     super.initState();
+    _initTripParameters();
     _syncStatusFromOtp();
+    _fetchPlannedRoute();
     _startGpsTracking();
     _startTimerTicker();
+  }
+
+  @override
+  void didUpdateWidget(covariant TrackingScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.trip != widget.trip ||
+        oldWidget.sourceLocation != widget.sourceLocation ||
+        oldWidget.destinationLocation != widget.destinationLocation ||
+        oldWidget.sourceName != widget.sourceName ||
+        oldWidget.destinationName != widget.destinationName) {
+      _initTripParameters();
+      _plannedRoute.clear();
+      _alternativeRoutes.clear();
+      _fetchPlannedRoute();
+    }
   }
 
   @override
@@ -56,6 +112,29 @@ class _TrackingScreenState extends State<TrackingScreen> {
     _timerTicker?.cancel();
     _locationService.stopTracking();
     super.dispose();
+  }
+
+  void _initTripParameters() {
+    if (widget.trip != null) {
+      _parcelId = widget.trip!.parcelId;
+      _sourceName = widget.trip!.sourceName;
+      _sourceLocation = widget.trip!.sourceLocation;
+      _destinationName = widget.trip!.destinationName;
+      _destinationLocation = widget.trip!.destinationLocation;
+    } else {
+      _parcelId = widget.parcelId;
+      _sourceName = widget.sourceName;
+      _sourceLocation = widget.sourceLocation;
+      _destinationName = widget.destinationName;
+      _destinationLocation = widget.destinationLocation;
+    }
+  }
+
+  bool _isValidCoordinate(LatLng loc) {
+    return loc.latitude >= -90.0 &&
+        loc.latitude <= 90.0 &&
+        loc.longitude >= -180.0 &&
+        loc.longitude <= 180.0;
   }
 
   void _startTimerTicker() {
@@ -78,6 +157,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   void _syncStatusFromOtp() {
+    _pickupLocation = _otpService.pickupLocation;
+    _deliveryLocation = _otpService.deliveryLocation;
+    if (_otpService.locationHistory.isNotEmpty) {
+      _locationHistory.addAll(_otpService.locationHistory);
+      _rawGpsHistory.addAll(_otpService.locationHistory);
+    }
+
     if (_otpService.parcelStatus.name == 'delivered') {
       _status = ParcelStatus.delivered;
     } else if (_otpService.parcelStatus.name == 'pickedUp') {
@@ -85,78 +171,209 @@ class _TrackingScreenState extends State<TrackingScreen> {
     }
   }
 
+  // ─── OSRM Dynamic Road Routing ───────────────────────────────────────────
+
+  Future<void> _fetchPlannedRoute() async {
+    if (!_isValidCoordinate(_sourceLocation) || !_isValidCoordinate(_destinationLocation)) {
+      setState(() {
+        _routingError = 'Location information unavailable';
+      });
+      return;
+    }
+
+    final start = _pickupLocation ?? _sourceLocation;
+
+    setState(() {
+      _isRouteLoading = true;
+      _routingError = null;
+    });
+
+    final result = await _routingService.getRoute(
+      start: start,
+      destination: _destinationLocation,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isRouteLoading = false;
+        if (result != null && result.points.isNotEmpty) {
+          _plannedRoute = result.points;
+          _alternativeRoutes = result.alternativeRoutes;
+
+          // Road distance formatting
+          final km = result.distanceMeters / 1000.0;
+          _roadDistanceText = km >= 1.0
+              ? 'Approx. ${km.toStringAsFixed(1)} km'
+              : 'Approx. ${result.distanceMeters.round()} m';
+
+          // Road duration formatting
+          final hours = (result.durationSeconds / 3600).floor();
+          final minutes = ((result.durationSeconds % 3600) / 60).round();
+          if (hours > 0) {
+            _roadDurationText = '$hours hr $minutes min est.';
+          } else {
+            _roadDurationText = '$minutes min est.';
+          }
+
+          // Re-snap existing raw points to newly loaded planned route
+          if (_rawGpsHistory.isNotEmpty) {
+            _locationHistory.clear();
+            for (final pt in _rawGpsHistory) {
+              final snapped = RoutingService.snapPointToRoute(pt, _plannedRoute);
+              _locationHistory.add(snapped);
+            }
+            _otpService.locationHistory = _locationHistory;
+          }
+        } else {
+          _routingError = 'Unable to calculate route';
+        }
+      });
+    }
+  }
+
+  // ─── Distance & Destination Detection ───────────────────────────────────
+
+  /// Distance in meters between current GPS location and destination
+  double? get _distanceToDestinationMeters {
+    final target = _currentLocation ?? _pickupLocation;
+    if (target == null) return null;
+    return Geolocator.distanceBetween(
+      target.latitude,
+      target.longitude,
+      _destinationLocation.latitude,
+      _destinationLocation.longitude,
+    );
+  }
+
+  /// True if traveller is within 100 meters threshold or arrival is simulated for demo
+  bool get _hasReachedDestination {
+    if (_status == ParcelStatus.delivered || _deliveryLocation != null) return true;
+    if (_simulateDestinationArrival) return true;
+    final dist = _distanceToDestinationMeters;
+    return dist != null && dist <= 100.0;
+  }
+
   // ─── GPS Operations ──────────────────────────────────────────────────────
 
   Future<void> _startGpsTracking() async {
     if (_status == ParcelStatus.delivered) return;
-
-    setState(() {
-      _isLoadingGps = true;
-      _gpsErrorMessage = null;
-    });
 
     try {
       await _locationService.verifyPermissionAndService();
 
       final initialPos = await _locationService.getCurrentLocation();
       if (mounted) {
+        final posPt = LatLng(initialPos.latitude, initialPos.longitude);
         setState(() {
-          _currentLocation = LatLng(initialPos.latitude, initialPos.longitude);
-          _status = ParcelStatus.inTransit;
+          _currentLocation = posPt;
+          _pickupLocation ??= posPt;
+          _otpService.pickupLocation ??= posPt;
+
+          _recordHistoryPoint(posPt, accuracy: initialPos.accuracy);
+          _checkRouteDeviation(posPt);
+
+          if (_status != ParcelStatus.delivered) {
+            _status = ParcelStatus.inTransit;
+          }
           _lastUpdated = DateTime.now();
           _timeAgoText = 'Just now';
-          _isLoadingGps = false;
         });
       }
 
       await _locationService.startTracking(
+        distanceFilter: 5, // 5-meter distance filter for meaningful movement
         onData: (position) {
-          if (!mounted) return;
+          if (!mounted || _status == ParcelStatus.delivered) return;
+          final pt = LatLng(position.latitude, position.longitude);
           setState(() {
-            _currentLocation = LatLng(position.latitude, position.longitude);
-            _status = ParcelStatus.inTransit;
+            _currentLocation = pt;
+            _pickupLocation ??= pt;
+            _otpService.pickupLocation ??= pt;
+
+            _recordHistoryPoint(pt, accuracy: position.accuracy);
+            _checkRouteDeviation(pt);
+
+            if (_status != ParcelStatus.delivered) {
+              _status = ParcelStatus.inTransit;
+            }
             _lastUpdated = DateTime.now();
             _timeAgoText = 'Just now';
-            _isLoadingGps = false;
-            _gpsErrorMessage = null;
           });
         },
-        onError: (error) {
-          if (!mounted) return;
-          setState(() {
-            _gpsErrorMessage = 'Unable to update location';
-            _isLoadingGps = false;
-          });
-        },
+        onError: (_) {},
       );
-    } catch (e) {
-      if (!mounted) return;
-      final msg = e.toString().replaceAll('Exception: ', '');
+    } catch (_) {}
+  }
+
+  void _recordHistoryPoint(LatLng pt, {double? accuracy}) {
+    // 1. Accuracy Filter: Ignore noisy/erratic GPS readings (> 35m accuracy)
+    if (accuracy != null && accuracy > 35.0) {
+      return;
+    }
+
+    // 2. Append to raw GPS history (source of truth)
+    if (_rawGpsHistory.isEmpty || _rawGpsHistory.last != pt) {
+      if (_rawGpsHistory.length >= 200) {
+        _rawGpsHistory.removeAt(0);
+      }
+      _rawGpsHistory.add(pt);
+    }
+
+    // 3. Local Road-Snapping against OSRM planned route
+    final snappedPt = RoutingService.snapPointToRoute(pt, _plannedRoute);
+
+    if (_locationHistory.isEmpty || _locationHistory.last != snappedPt) {
+      if (_locationHistory.length >= 200) {
+        _locationHistory.removeAt(0);
+      }
+      _locationHistory.add(snappedPt);
+      _otpService.locationHistory = _locationHistory;
+    }
+  }
+
+  void _checkRouteDeviation(LatLng pt) {
+    if (_plannedRoute.isEmpty) return;
+    double minDistance = double.infinity;
+    for (final rPt in _plannedRoute) {
+      final d = Geolocator.distanceBetween(
+        pt.latitude,
+        pt.longitude,
+        rPt.latitude,
+        rPt.longitude,
+      );
+      if (d < minDistance) {
+        minDistance = d;
+      }
+    }
+    // Flag route deviation if traveller is > 1.5 km away from nearest OSRM route coordinate
+    final isDeviated = minDistance > 1500.0;
+    if (isDeviated != _isOffRoute) {
       setState(() {
-        _isLoadingGps = false;
-        _gpsErrorMessage = msg.contains('denied')
-            ? 'Location permission is required for tracking.'
-            : msg.contains('disabled')
-                ? 'Please enable location services.'
-                : 'Unable to update location. Try again.';
+        _isOffRoute = isDeviated;
       });
     }
   }
 
-  /// Real GPS Refresh Triggered by AppBar Refresh Button
+  /// Real Device GPS Refresh Triggered by AppBar Refresh Button
   Future<void> _refreshGpsLocation() async {
     if (_isRefreshing) return;
 
     setState(() {
       _isRefreshing = true;
-      _gpsErrorMessage = null;
     });
 
     try {
       final position = await _locationService.getCurrentLocation();
       if (mounted) {
+        final pt = LatLng(position.latitude, position.longitude);
         setState(() {
-          _currentLocation = LatLng(position.latitude, position.longitude);
+          _currentLocation = pt;
+          _pickupLocation ??= pt;
+          _otpService.pickupLocation ??= pt;
+
+          _recordHistoryPoint(pt, accuracy: position.accuracy);
+          _checkRouteDeviation(pt);
+
           _lastUpdated = DateTime.now();
           _timeAgoText = 'Just now';
           _isRefreshing = false;
@@ -183,7 +400,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
       setState(() {
         _isRefreshing = false;
-        _gpsErrorMessage = userErr;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -201,23 +417,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
     _locationService.stopTracking();
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
-
-  ParcelStatusUi get _statusUi {
-    switch (_status) {
-      case ParcelStatus.paymentConfirmed:
-        return ParcelStatusUi.paymentConfirmed;
-      case ParcelStatus.pickedUp:
-        return ParcelStatusUi.pickedUp;
-      case ParcelStatus.inTransit:
-        return ParcelStatusUi.inTransit;
-      case ParcelStatus.delivered:
-        return ParcelStatusUi.delivered;
-      default:
-        return ParcelStatusUi.inTransit;
-    }
-  }
-
   void _navigateToDelivery() async {
     await Navigator.push(
       context,
@@ -227,6 +426,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
       setState(() {
         if (_otpService.parcelStatus.name == 'delivered') {
           _status = ParcelStatus.delivered;
+          _deliveryLocation = _otpService.deliveryLocation;
+          if (_deliveryLocation != null) {
+            _recordHistoryPoint(_deliveryLocation!);
+          }
           _stopGpsTracking();
         }
       });
@@ -238,426 +441,539 @@ class _TrackingScreenState extends State<TrackingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: TravgoColors.scaffoldBg,
-      appBar: travgoAppBar(
-        'Track Parcel',
-        actions: [
-          _isRefreshing
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14),
-                  child: Center(
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: TravgoColors.primary,
+      backgroundColor: const Color(0xFF0F172A), // Dark slate theme
+      body: Stack(
+        children: [
+          // ── Layer 0: Hero Full-Screen Satellite Map Canvas ─────────────────
+          Positioned.fill(
+            child: TrackingMap(
+              sourceName: _sourceName,
+              destinationName: _destinationName,
+              sourceLocation: _sourceLocation,
+              destinationLocation: _destinationLocation,
+              pickupLocation: _pickupLocation,
+              deliveryLocation: _deliveryLocation,
+              locationHistory: _locationHistory,
+              plannedRoute: _plannedRoute,
+              alternativeRoutes: _alternativeRoutes,
+              currentLocation: _currentLocation,
+              isFollowingTraveller: _isFollowingTraveller,
+              onUserPanned: () {
+                if (_isFollowingTraveller) {
+                  setState(() {
+                    _isFollowingTraveller = false;
+                  });
+                }
+              },
+              height: double.infinity,
+            ),
+          ),
+
+          // ── Layer 1: Minimalist Translucent Overlay App Bar ────────────────
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _buildDarkOverlayAppBar(),
+          ),
+
+          // ── Layer 2: Routing Alert / Deviation Banner ─────────────────────
+          if (_routingError != null)
+            Positioned(
+              top: 90,
+              left: 16,
+              right: 80,
+              child: _buildRoutingErrorBanner(),
+            )
+          else if (_isOffRoute && _status != ParcelStatus.delivered)
+            Positioned(
+              top: 90,
+              left: 16,
+              right: 80,
+              child: _buildRouteDeviationBanner(),
+            ),
+
+          // ── Layer 3: Compact Navigation Bottom Panel (~25% Screen Height) ──
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildCompactBottomPanel(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Layer 1: App Bar ─────────────────────────────────────────────────────
+
+  Widget _buildDarkOverlayAppBar() {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 6,
+        bottom: 12,
+        left: 12,
+        right: 12,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black.withValues(alpha: 0.8),
+            Colors.black.withValues(alpha: 0.3),
+            Colors.transparent,
+          ],
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+            },
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      'Live Tracking',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        fontFamily: 'Inter',
                       ),
                     ),
+                    if (_isRouteLoading) ...[
+                      const SizedBox(width: 8),
+                      const Text(
+                        '• Calculating route...',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: Color(0xFF60A5FA),
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                Text(
+                  'Parcel #$_parcelId',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF94A3B8),
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _isRefreshing || _isRouteLoading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
                   ),
                 )
               : IconButton(
-                  icon: const Icon(Icons.refresh_rounded,
-                      color: TravgoColors.primary),
+                  icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
                   tooltip: 'Refresh GPS',
                   onPressed: _refreshGpsLocation,
                 ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. Prominent OpenStreetMap Container (Tap to Expand)
-              _buildMapSection(),
-
-              const SizedBox(height: 14),
-
-              // 2. Compact Status & Parcel Info Card
-              _buildParcelHeaderCard(),
-
-              const SizedBox(height: 12),
-
-              // 3. Compact Current Location Card
-              _buildLocationCard(),
-
-              const SizedBox(height: 12),
-
-              // 4. Compact Vertical Timeline
-              _buildVerticalTimeline(),
-
-              const SizedBox(height: 16),
-
-              // 5. Delivery Action / Success Card
-              if (_status != ParcelStatus.delivered) ...[
-                TravgoPrimaryButton(
-                  label: 'Reached Destination — Verify Delivery',
-                  icon: Icons.pin_drop_rounded,
-                  onPressed: _navigateToDelivery,
-                ),
-              ] else ...[
-                _buildDeliveredSuccessCard(),
-              ],
-
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
-  // ─── Component Cards ──────────────────────────────────────────────────────
-
-  Widget _buildMapSection() {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => LiveTrackingMapScreen(
-              initialLocation: _currentLocation,
-              sourceLocation: _sourceLocation,
-              destinationLocation: _destinationLocation,
-              sourceName: 'Coimbatore',
-              destinationName: 'Chennai',
-              parcelId: 'TRV1024',
-            ),
-          ),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1A73E8).withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            TrackingMap(
-              sourceName: 'Coimbatore',
-              destinationName: 'Chennai',
-              sourceLocation: _sourceLocation,
-              destinationLocation: _destinationLocation,
-              currentLocation: _currentLocation,
-              height: 290,
-            ),
-
-            // Tap hint badge
-            Positioned(
-              right: 12,
-              bottom: 12,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: TravgoColors.primary,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: TravgoColors.primary.withValues(alpha: 0.35),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.fullscreen_rounded,
-                        color: Colors.white, size: 14),
-                    SizedBox(width: 4),
-                    Text(
-                      'Expand Live Map',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+  Widget _buildRoutingErrorBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xF078350F), // Dark amber
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFF59E0B)),
       ),
-    );
-  }
-
-  Widget _buildParcelHeaderCard() {
-    return TravgoCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Parcel #TRV1024',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: TravgoColors.textPrimary,
-                ),
-              ),
-              const Spacer(),
-              ParcelStatusChip(status: _statusUi),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(color: TravgoColors.divider, height: 1),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.location_on_outlined,
-                  color: TravgoColors.primary, size: 16),
-              const SizedBox(width: 6),
-              const Text('Coimbatore', style: TravgoText.bodyBold),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8),
-                child: Icon(Icons.arrow_forward_rounded,
-                    size: 14, color: TravgoColors.textSecondary),
-              ),
-              const Icon(Icons.location_on_rounded,
-                  color: TravgoColors.success, size: 16),
-              const SizedBox(width: 6),
-              const Text('Chennai', style: TravgoText.bodyBold),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLocationCard() {
-    final locationText = _currentLocation != null
-        ? '${_currentLocation!.latitude.toStringAsFixed(4)}, ${_currentLocation!.longitude.toStringAsFixed(4)}'
-        : _isLoadingGps
-            ? 'Fetching GPS position...'
-            : 'Location unavailable';
-
-    return TravgoCard(
-      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: TravgoColors.primaryBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.my_location_rounded,
-                color: TravgoColors.primary, size: 20),
-          ),
-          const SizedBox(width: 14),
+          const Icon(Icons.warning_amber_rounded, color: Color(0xFFFCD34D), size: 16),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Text(
+              _routingError ?? 'Unable to calculate route',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                fontFamily: 'Inter',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRouteDeviationBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xF0991B1B), // Dark amber red
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFEF4444)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.alt_route_rounded, color: Colors.white, size: 16),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Route deviation detected',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                fontFamily: 'Inter',
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              _plannedRoute.clear();
+              _fetchPlannedRoute();
+            },
+            child: const Text(
+              'Recalculate',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFFCA5A5),
+                decoration: TextDecoration.underline,
+                fontFamily: 'Inter',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Layer 3: Compact Bottom Navigation Panel (~25% Screen Height) ────────
+
+  Widget _buildCompactBottomPanel() {
+    final isDelivered = _status == ParcelStatus.delivered;
+    final isReached = _hasReachedDestination;
+
+    final coordsText = _currentLocation != null
+        ? '${_currentLocation!.latitude.toStringAsFixed(4)}, ${_currentLocation!.longitude.toStringAsFixed(4)}'
+        : 'Acquiring GPS...';
+
+    final distText = _roadDistanceText ??
+        (_distanceToDestinationMeters != null
+            ? (_distanceToDestinationMeters! >= 1000
+                ? 'Approx. ${(_distanceToDestinationMeters! / 1000).toStringAsFixed(1)} km'
+                : 'Approx. ${_distanceToDestinationMeters!.round()} m')
+            : null);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xF00F172A), // Dark translucent charcoal
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        border: Border.all(color: const Color(0xFF334155)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Status Header + Route Strip
+            Row(
               children: [
-                const Text('Current Location', style: TravgoText.caption),
-                const SizedBox(height: 2),
-                Text(
-                  locationText,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: TravgoColors.textPrimary,
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: isDelivered
+                        ? const Color(0xFF10B981)
+                        : isReached
+                            ? const Color(0xFFF59E0B)
+                            : const Color(0xFF3B82F6),
+                    shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(width: 8),
                 Text(
-                  'Updated $_timeAgoText',
+                  isDelivered
+                      ? 'DELIVERY COMPLETED'
+                      : isReached
+                          ? 'DESTINATION REACHED'
+                          : 'TRACKING ACTIVE',
                   style: TextStyle(
                     fontSize: 11,
-                    color: TravgoColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                    color: isDelivered
+                        ? const Color(0xFF10B981)
+                        : isReached
+                            ? const Color(0xFFF59E0B)
+                            : const Color(0xFF3B82F6),
+                    fontFamily: 'Inter',
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '$_sourceName → $_destinationName',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontFamily: 'Inter',
                   ),
                 ),
               ],
             ),
-          ),
-          if (_gpsErrorMessage != null)
-            Tooltip(
-              message: _gpsErrorMessage!,
-              child: const Icon(Icons.info_outline_rounded,
-                  color: TravgoColors.warning, size: 18),
+
+            const SizedBox(height: 10),
+            const Divider(color: Color(0xFF334155), height: 1),
+            const SizedBox(height: 10),
+
+            // Compact Horizontal Progress Timeline
+            _buildHorizontalProgressTimeline(isReached: isReached, isDelivered: isDelivered),
+
+            const SizedBox(height: 10),
+
+            // GPS Coordinates & Distance/Duration Line
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '$coordsText • $_timeAgoText',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF94A3B8),
+                      fontFamily: 'Inter',
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (distText != null && !isDelivered) ...[
+                  Text(
+                    _roadDurationText != null ? '$distText • $_roadDurationText' : distText,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF60A5FA),
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ],
+              ],
             ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildVerticalTimeline() {
-    final isPickedUp = _status == ParcelStatus.pickedUp ||
-        _status == ParcelStatus.inTransit ||
-        _status == ParcelStatus.delivered;
-    final isDelivered = _status == ParcelStatus.delivered;
+            const SizedBox(height: 12),
 
-
-    return TravgoCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Delivery Status', style: TravgoText.sectionTitle),
-          const SizedBox(height: 14),
-          _timelineNode(
-            title: 'Picked Up',
-            subtitle: 'Sender handoff verified via OTP',
-            isDone: isPickedUp,
-            isActive: _status == ParcelStatus.pickedUp,
-            isLast: false,
-          ),
-          _timelineNode(
-            title: 'In Transit',
-            subtitle: 'Live GPS tracking active',
-            isDone: isDelivered,
-            isActive: _status == ParcelStatus.inTransit,
-            isLast: false,
-          ),
-          _timelineNode(
-            title: 'Delivered',
-            subtitle: 'Receiver OTP handover',
-            isDone: isDelivered,
-            isActive: _status == ParcelStatus.delivered,
-            isLast: true,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _timelineNode({
-    required String title,
-    required String subtitle,
-    required bool isDone,
-    required bool isActive,
-    required bool isLast,
-  }) {
-    final color = isDone
-        ? TravgoColors.success
-        : isActive
-            ? TravgoColors.primary
-            : TravgoColors.textHint;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          children: [
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: isDone
-                    ? TravgoColors.success
-                    : isActive
-                        ? TravgoColors.primary
-                        : Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: color, width: 2),
-              ),
-              child: Center(
-                child: isDone
-                    ? const Icon(Icons.check_rounded,
-                        color: Colors.white, size: 12)
-                    : isActive
-                        ? Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-              ),
-            ),
-            if (!isLast)
-              Container(
-                width: 2,
-                height: 28,
-                color: isDone ? TravgoColors.success : TravgoColors.border,
-              ),
+            // Action Button Section
+            _buildCompactActionButton(isReached: isReached, isDelivered: isDelivered),
           ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isActive || isDone
-                      ? FontWeight.w700
-                      : FontWeight.w500,
-                  color: isDone
-                      ? TravgoColors.textPrimary
-                      : isActive
-                          ? TravgoColors.primary
-                          : TravgoColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: TravgoText.caption,
-              ),
-              if (!isLast) const SizedBox(height: 10),
-            ],
+      ),
+    );
+  }
+
+  Widget _buildHorizontalProgressTimeline({
+    required bool isReached,
+    required bool isDelivered,
+  }) {
+    return Row(
+      children: [
+        _horizontalNode('Pickup', true, false),
+        _horizontalConnector(true),
+        _horizontalNode('In Transit', !isReached && !isDelivered, isReached || isDelivered),
+        _horizontalConnector(isReached || isDelivered),
+        _horizontalNode('Delivery', isReached && !isDelivered, isDelivered),
+      ],
+    );
+  }
+
+  Widget _horizontalNode(String label, bool isActive, bool isDone) {
+    final color = isDone
+        ? const Color(0xFF10B981)
+        : isActive
+            ? const Color(0xFF3B82F6)
+            : const Color(0xFF64748B);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: isDone
+                ? const Color(0xFF10B981)
+                : isActive
+                    ? const Color(0xFF3B82F6)
+                    : Colors.transparent,
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 1.5),
+          ),
+          child: Center(
+            child: isDone
+                ? const Icon(Icons.check_rounded, color: Colors.white, size: 8)
+                : isActive
+                    ? Container(
+                        width: 4,
+                        height: 4,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isActive || isDone ? FontWeight.w600 : FontWeight.w400,
+            color: isDone || isActive ? Colors.white : const Color(0xFF64748B),
+            fontFamily: 'Inter',
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDeliveredSuccessCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: TravgoColors.successBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: TravgoColors.successBorder),
+  Widget _horizontalConnector(bool isDone) {
+    return Expanded(
+      child: Container(
+        height: 1.5,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        color: isDone ? const Color(0xFF10B981) : const Color(0xFF334155),
       ),
-      child: const Row(
-        children: [
-          Icon(Icons.check_circle_rounded,
-              color: TravgoColors.success, size: 28),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Parcel Delivered',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: TravgoColors.success,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Handover confirmed. GPS tracking completed.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: TravgoColors.textPrimary,
-                  ),
-                ),
-              ],
+    );
+  }
+
+  Widget _buildCompactActionButton({
+    required bool isReached,
+    required bool isDelivered,
+  }) {
+    if (isDelivered) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF065F46).withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFF059669)),
+        ),
+        child: const Center(
+          child: Text(
+            '✓ Handover Verified via OTP • Delivery Complete',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF34D399),
+              fontFamily: 'Inter',
             ),
           ),
-        ],
+        ),
+      );
+    }
+
+    if (isReached) {
+      return SizedBox(
+        width: double.infinity,
+        height: 42,
+        child: ElevatedButton.icon(
+          onPressed: _navigateToDelivery,
+          icon: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 16),
+          label: const Text(
+            'Verify Delivery',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              fontFamily: 'Inter',
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF10B981),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: () {
+        setState(() {
+          _simulateDestinationArrival = !_simulateDestinationArrival;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_simulateDestinationArrival
+                ? 'Simulated arrival within 100m threshold'
+                : 'Reset to real GPS distance'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      icon: Icon(
+        _simulateDestinationArrival
+            ? Icons.undo_rounded
+            : Icons.sports_score_rounded,
+        size: 14,
+        color: const Color(0xFF60A5FA),
+      ),
+      label: Text(
+        _simulateDestinationArrival
+            ? 'Reset GPS Distance'
+            : 'Simulate Reaching Destination (<100m)',
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF60A5FA),
+          fontFamily: 'Inter',
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(36),
+        side: const BorderSide(color: Color(0xFF3B82F6)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
       ),
     );
   }

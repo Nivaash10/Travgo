@@ -15,6 +15,7 @@
 /// ─────────────────────────────────────────────────────────────────────────────
 library;
 
+import 'package:latlong2/latlong.dart';
 import '../models/otp_model.dart';
 
 /// Result returned by every verify call so the screen can display the
@@ -45,6 +46,12 @@ class OtpService {
   OtpModel? _pickupOtp;
   OtpModel? _deliveryOtp;
   ParcelStatus _parcelStatus = ParcelStatus.paymentConfirmed;
+
+  // ─── Milestone GPS Locations ────────────────────────────────────────────────
+  LatLng? pickupLocation;
+  LatLng? deliveryLocation;
+  List<LatLng> locationHistory = [];
+
 
   // ─── Singleton accessor (optional convenience) ───────────────────────────────
   static final OtpService instance = OtpService._();
