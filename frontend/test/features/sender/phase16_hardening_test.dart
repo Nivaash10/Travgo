@@ -75,147 +75,160 @@ void main() {
       expect(completion.proofReference, isNull);
     });
 
-    test('SenderDeliveryRating model handles missing optional feedback cleanly', () {
-      final rating = SenderDeliveryRating(
-        id: 'RAT-NULL',
-        requestId: 'REQ-NULL',
-        bookingId: 'BKG-NULL',
-        travellerName: 'Arun',
-        submittedAt: DateTime.now(),
-      );
+    test(
+      'SenderDeliveryRating model handles missing optional feedback cleanly',
+      () {
+        final rating = SenderDeliveryRating(
+          id: 'RAT-NULL',
+          requestId: 'REQ-NULL',
+          bookingId: 'BKG-NULL',
+          travellerName: 'Arun',
+          submittedAt: DateTime.now(),
+        );
 
-      expect(rating.rating, equals(0.0));
-      expect(rating.feedback, isNull);
-      expect(rating.isSubmitted, isFalse);
-      expect(rating.isValidRating, isFalse);
-    });
+        expect(rating.rating, equals(0.0));
+        expect(rating.feedback, isNull);
+        expect(rating.isSubmitted, isFalse);
+        expect(rating.isValidRating, isFalse);
+      },
+    );
   });
 
   group('Phase 16 Screen Robustness & Edge Case Rendering Tests', () {
-    testWidgets('SenderTrackingScreen renders safely with minimal optional fields', (tester) async {
-      final minimalTracking = SenderTracking(
-        bookingId: 'BKG-MIN',
-        requestId: 'REQ-MIN',
-        currentStatus: SenderTrackingStatus.pickedUp,
-        statusMessage: 'Picked up parcel',
-        source: 'Coimbatore',
-        destination: 'Madurai',
-        travellerName: 'Bala',
-        travelDateTime: 'Today • 10:00 AM',
-        lastUpdated: DateTime.now(),
-      );
+    testWidgets(
+      'SenderTrackingScreen renders safely with minimal optional fields',
+      (tester) async {
+        final minimalTracking = SenderTracking(
+          bookingId: 'BKG-MIN',
+          requestId: 'REQ-MIN',
+          currentStatus: SenderTrackingStatus.pickedUp,
+          statusMessage: 'Picked up parcel',
+          source: 'Coimbatore',
+          destination: 'Madurai',
+          travellerName: 'Bala',
+          travelDateTime: 'Today • 10:00 AM',
+          lastUpdated: DateTime.now(),
+        );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SenderTrackingScreen(tracking: minimalTracking),
-        ),
-      );
+        await tester.pumpWidget(
+          MaterialApp(home: SenderTrackingScreen(tracking: minimalTracking)),
+        );
 
-     expect(find.text('Live Tracking'), findsOneWidget);
-     expect(find.text('Picked up parcel'), findsOneWidget);
-    });
-
-    testWidgets('SenderDeliveryCompletionScreen renders safely with proof disabled', (tester) async {
-      final noProofCompletion = SenderDeliveryCompletion(
-        bookingId: 'BKG-NOPROOF',
-        requestId: 'REQ-NOPROOF',
-        deliveredAt: DateTime.now(),
-        receiverName: 'Suresh',
-        destination: 'Trichy',
-        travellerName: 'Karthik',
-        parcelDescription: 'Small pouch',
-        parcelWeightKg: 0.5,
-        proofOfDeliveryAvailable: false,
-        deliveryMessage: 'Parcel safely delivered to Suresh.',
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SenderDeliveryCompletionScreen(completion: noProofCompletion),
-        ),
-      );
-
-      expect(find.text('Delivery Status'), findsOneWidget);
-      expect(find.text('PROOF OF DELIVERY'), findsOneWidget);
-    });
-
-    testWidgets('SenderDeliveryFeedbackScreen renders cleanly and validates feedback submission', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(800, 1800));
-      addTearDown(() async => await tester.binding.setSurfaceSize(null));
-
-      final unsubmittedRating = SenderDeliveryRating(
-        id: 'RAT-TEST',
-        requestId: 'REQ-TEST',
-        bookingId: 'BKG-TEST',
-        travellerName: 'Arun',
-        route: 'Coimbatore → Chennai',
-        rating: 4.0,
-        submittedAt: DateTime.now(),
-        isSubmitted: false,
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SenderDeliveryFeedbackScreen(
-            ratingData: unsubmittedRating,
-          ),
-        ),
-      );
-
-expect(find.text('Rate & Review'), findsOneWidget);
-
-    final submitBtn = find.widgetWithText(
-    ElevatedButton,
-    'Submit Review (4 Stars)',
+        expect(find.text('Live Tracking'), findsOneWidget);
+        expect(find.text('Picked Up'), findsOneWidget);
+        expect(find.text('Bala'), findsOneWidget);
+      },
     );
-    await tester.ensureVisible(submitBtn);
-    await tester.tap(submitBtn);
-    await tester.pump(const Duration(milliseconds: 800));
-    await tester.pump(const Duration(milliseconds: 1300));  
-      await tester.pumpAndSettle();
 
-      expect(find.text('Thank You!'), findsOneWidget);
-    });
+    testWidgets(
+      'SenderDeliveryCompletionScreen renders safely with proof disabled',
+      (tester) async {
+        final noProofCompletion = SenderDeliveryCompletion(
+          bookingId: 'BKG-NOPROOF',
+          requestId: 'REQ-NOPROOF',
+          deliveredAt: DateTime.now(),
+          receiverName: 'Suresh',
+          destination: 'Trichy',
+          travellerName: 'Karthik',
+          parcelDescription: 'Small pouch',
+          parcelWeightKg: 0.5,
+          proofOfDeliveryAvailable: false,
+          deliveryMessage: 'Parcel safely delivered to Suresh.',
+        );
 
-    testWidgets('SenderBookingDetailScreen renders with all delivery status states', (tester) async {
-      final booking = SenderMockBookingData.getMockBookings().first;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SenderBookingDetailScreen(booking: booking),
-        ),
-      );
-
-      expect(find.text('Booking Details'), findsOneWidget);
-      expect(find.text('BKG-101'), findsOneWidget);
-    });
-
-    testWidgets('SenderPaymentScreen renders pay button and handles payment submit', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(800, 1800));
-      addTearDown(() async => await tester.binding.setSurfaceSize(null));
-
-      final booking = SenderMockBookingData.getMockBookings().first;
-      bool completed = false;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SenderPaymentScreen(
-            booking: booking,
-            delayDuration: Duration.zero,
-            onPaymentCompleted: (_) => completed = true,
+        await tester.pumpWidget(
+          MaterialApp(
+            home: SenderDeliveryCompletionScreen(completion: noProofCompletion),
           ),
-        ),
-      );
+        );
 
-      final payButtonFinder = find.text('Pay ₹115');
-      await tester.ensureVisible(payButtonFinder);
-      await tester.pumpAndSettle();
+        expect(find.text('Delivery Status'), findsOneWidget);
+        expect(find.text('PROOF OF DELIVERY'), findsOneWidget);
+      },
+    );
 
-      expect(payButtonFinder, findsOneWidget);
-      await tester.tap(payButtonFinder);
-      await tester.pumpAndSettle();
+    testWidgets(
+      'SenderDeliveryFeedbackScreen renders cleanly and validates feedback submission',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(800, 1800));
+        addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-      expect(completed, isTrue);
-    });
+        final unsubmittedRating = SenderDeliveryRating(
+          id: 'RAT-TEST',
+          requestId: 'REQ-TEST',
+          bookingId: 'BKG-TEST',
+          travellerName: 'Arun',
+          route: 'Coimbatore → Chennai',
+          rating: 4.0,
+          submittedAt: DateTime.now(),
+          isSubmitted: false,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: SenderDeliveryFeedbackScreen(ratingData: unsubmittedRating),
+          ),
+        );
+
+        expect(find.text('Rate & Review'), findsOneWidget);
+
+        final submitBtn = find.widgetWithText(
+          ElevatedButton,
+          'Submit Review (4 Stars)',
+        );
+        await tester.ensureVisible(submitBtn);
+        await tester.tap(submitBtn);
+        await tester.pump(const Duration(milliseconds: 800));
+        await tester.pump(const Duration(milliseconds: 1300));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Thank You!'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'SenderBookingDetailScreen renders with all delivery status states',
+      (tester) async {
+        final booking = SenderMockBookingData.getMockBookings().first;
+
+        await tester.pumpWidget(
+          MaterialApp(home: SenderBookingDetailScreen(booking: booking)),
+        );
+
+        expect(find.text('Booking Details'), findsOneWidget);
+        expect(find.text('BKG-101'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'SenderPaymentScreen renders pay button and handles payment submit',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(800, 1800));
+        addTearDown(() async => await tester.binding.setSurfaceSize(null));
+
+        final booking = SenderMockBookingData.getMockBookings().first;
+        bool completed = false;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: SenderPaymentScreen(
+              booking: booking,
+              delayDuration: Duration.zero,
+              onPaymentCompleted: (_) => completed = true,
+            ),
+          ),
+        );
+
+        final payButtonFinder = find.text('Pay ₹115');
+        await tester.ensureVisible(payButtonFinder);
+        await tester.pumpAndSettle();
+
+        expect(payButtonFinder, findsOneWidget);
+        await tester.tap(payButtonFinder);
+        await tester.pumpAndSettle();
+
+        expect(completed, isTrue);
+      },
+    );
   });
 }

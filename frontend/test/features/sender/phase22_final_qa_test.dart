@@ -25,16 +25,19 @@ void main() {
 
     test('TASK 22.4 Status Consistency Across All Delivery Enums', () {
       const statuses = SenderDeliveryStatus.values;
-      expect(statuses, containsAll([
-        SenderDeliveryStatus.pending,
-        SenderDeliveryStatus.accepted,
-        SenderDeliveryStatus.rejected,
-        SenderDeliveryStatus.cancelled,
-        SenderDeliveryStatus.pickupPending,
-        SenderDeliveryStatus.pickedUp,
-        SenderDeliveryStatus.inTransit,
-        SenderDeliveryStatus.delivered,
-      ]));
+      expect(
+        statuses,
+        containsAll([
+          SenderDeliveryStatus.pending,
+          SenderDeliveryStatus.accepted,
+          SenderDeliveryStatus.rejected,
+          SenderDeliveryStatus.cancelled,
+          SenderDeliveryStatus.pickupPending,
+          SenderDeliveryStatus.pickedUp,
+          SenderDeliveryStatus.inTransit,
+          SenderDeliveryStatus.delivered,
+        ]),
+      );
     });
 
     test('TASK 22.6 Repository State & Fallback Safety', () async {
@@ -55,7 +58,9 @@ void main() {
       expect(completion!.bookingId, equals('BKG-105'));
     });
 
-    testWidgets('TASK 22.3 & 22.5 Dashboard Entry Points & Layout QA', (tester) async {
+    testWidgets('TASK 22.3 & 22.5 Dashboard Entry Points & Layout QA', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
@@ -90,7 +95,9 @@ void main() {
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
       final booking = SenderMockBookingData.getMockBookings().first;
-      await tester.pumpWidget(MaterialApp(home: SenderBookingDetailScreen(booking: booking)));
+      await tester.pumpWidget(
+        MaterialApp(home: SenderBookingDetailScreen(booking: booking)),
+      );
       expect(find.text('Booking Details'), findsOneWidget);
     });
 
@@ -98,7 +105,9 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const MaterialApp(home: SenderTrackingScreen(bookingId: 'BKG-103')));
+      await tester.pumpWidget(
+        const MaterialApp(home: SenderTrackingScreen(bookingId: 'BKG-103')),
+      );
       expect(find.text('Live Tracking'), findsOneWidget);
     });
 
@@ -106,7 +115,11 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const MaterialApp(home: SenderDeliveryCompletionScreen(bookingId: 'BKG-105')));
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SenderDeliveryCompletionScreen(bookingId: 'BKG-105'),
+        ),
+      );
       expect(find.text('Delivery Completed'), findsOneWidget);
     });
 
@@ -114,8 +127,11 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-      final completion = SenderMockDeliveryCompletionData.getCompletionForBooking('BKG-105');
-      await tester.pumpWidget(MaterialApp(home: SenderProofViewerScreen(completion: completion)));
+      final completion =
+          SenderMockDeliveryCompletionData.getCompletionForBooking('BKG-105');
+      await tester.pumpWidget(
+        MaterialApp(home: SenderProofViewerScreen(completion: completion)),
+      );
       expect(find.text('Proof of Delivery'), findsOneWidget);
     });
 
@@ -134,19 +150,32 @@ void main() {
         isSubmitted: false,
       );
 
-      await tester.pumpWidget(MaterialApp(home: SenderDeliveryFeedbackScreen(ratingData: freshRating)));
-      expect(find.text('Rate Your Delivery'), findsOneWidget);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SenderDeliveryFeedbackScreen(ratingData: freshRating),
+        ),
+      );
+      expect(find.text('Rate & Review'), findsOneWidget);
 
-      await tester.tap(find.text('Submit Feedback'));
+      final submitBtn = find.widgetWithText(
+        ElevatedButton,
+        'Submit Review (5 Stars)',
+      );
+      await tester.ensureVisible(submitBtn);
+      await tester.tap(submitBtn);
+      await tester.pump(const Duration(milliseconds: 800));
+      await tester.pump(const Duration(milliseconds: 1300));
       await tester.pumpAndSettle();
-      expect(find.text('Feedback Submitted'), findsOneWidget);
+      expect(find.text('Thank You!'), findsOneWidget);
     });
 
     testWidgets('TASK 22.3 Notifications Screen QA', (tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const MaterialApp(home: SenderNotificationsScreen()));
+      await tester.pumpWidget(
+        const MaterialApp(home: SenderNotificationsScreen()),
+      );
       expect(find.text('Notifications'), findsOneWidget);
     });
 
@@ -164,7 +193,9 @@ void main() {
         deliveryLocation: 'Chennai',
       );
 
-      await tester.pumpWidget(MaterialApp(home: SenderDeliveryStatusScreen(statusItem: statusItem)));
+      await tester.pumpWidget(
+        MaterialApp(home: SenderDeliveryStatusScreen(statusItem: statusItem)),
+      );
       expect(find.text('Delivery Status'), findsOneWidget);
     });
   });

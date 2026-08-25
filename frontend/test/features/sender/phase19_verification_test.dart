@@ -26,55 +26,66 @@ void main() {
       SenderRepositoryFactory.setUseRemote(false);
     });
 
-    test('All 11 Sender flows execute via MockSenderRepository abstraction', () async {
-      final repo = MockSenderRepository();
+    test(
+      'All 11 Sender flows execute via MockSenderRepository abstraction',
+      () async {
+        final repo = MockSenderRepository();
 
-      // 1. Dashboard / Bookings list
-      final bookings = await repo.getBookings();
-      expect(bookings, isNotEmpty);
+        // 1. Dashboard / Bookings list
+        final bookings = await repo.getBookings();
+        expect(bookings, isNotEmpty);
 
-      // 2. Search Route / Travellers
-      const query = SenderSearchQuery(source: 'Coimbatore', destination: 'Chennai');
-      final searchResults = await repo.searchTravellers(query);
-      expect(searchResults, isNotEmpty);
+        // 2. Search Route / Travellers
+        const query = SenderSearchQuery(
+          source: 'Coimbatore',
+          destination: 'Chennai',
+        );
+        final searchResults = await repo.searchTravellers(query);
+        expect(searchResults, isNotEmpty);
 
-      // 3. Booking Details
-      final detail = await repo.getBookingDetails('BKG-101');
-      expect(detail, isNotNull);
+        // 3. Booking Details
+        final detail = await repo.getBookingDetails('BKG-101');
+        expect(detail, isNotNull);
 
-      // 4. Notifications
-      final notifs = await repo.getNotifications();
-      expect(notifs, isNotEmpty);
+        // 4. Notifications
+        final notifs = await repo.getNotifications();
+        expect(notifs, isNotEmpty);
 
-      // 5. Mark notification as read
-      await repo.markNotificationAsRead('NOTIF-1');
+        // 5. Mark notification as read
+        await repo.markNotificationAsRead('NOTIF-1');
 
-      // 6. Live Tracking
-      final tracking = await repo.getTracking('BKG-101');
-      expect(tracking, isNotNull);
+        // 6. Live Tracking
+        final tracking = await repo.getTracking('BKG-101');
+        expect(tracking, isNotNull);
 
-      // 7. Delivery Completion
-      final completion = await repo.getDeliveryCompletion('BKG-105');
-      expect(completion, isNotNull);
+        // 7. Delivery Completion
+        final completion = await repo.getDeliveryCompletion('BKG-105');
+        expect(completion, isNotNull);
 
-      // 8. Rating Submission
-      final rating = SenderDeliveryRating(
-        id: 'RAT-P19',
-        requestId: 'REQ-P19',
-        bookingId: 'BKG-105',
-        travellerName: 'Arun',
-        rating: 5.0,
-        submittedAt: DateTime.now(),
-      );
-      final submittedRating = await repo.submitRating(rating);
-      expect(submittedRating.isSubmitted, isTrue);
-    });
+        // 8. Rating Submission
+        final rating = SenderDeliveryRating(
+          id: 'RAT-P19',
+          requestId: 'REQ-P19',
+          bookingId: 'BKG-105',
+          travellerName: 'Arun',
+          rating: 5.0,
+          submittedAt: DateTime.now(),
+        );
+        final submittedRating = await repo.submitRating(rating);
+        expect(submittedRating.isSubmitted, isTrue);
+      },
+    );
 
     test('DTO / JSON Mapping round-trip integrity test', () {
       final now = DateTime.now();
 
       // SenderSearchQuery
-      final query = SenderSearchQuery(source: 'Coimbatore', destination: 'Chennai', date: now, parcelWeightKg: 3.0);
+      final query = SenderSearchQuery(
+        source: 'Coimbatore',
+        destination: 'Chennai',
+        date: now,
+        parcelWeightKg: 3.0,
+      );
       final queryJson = query.toJson();
       final queryRestored = SenderSearchQuery.fromJson(queryJson);
       expect(queryRestored.source, equals('Coimbatore'));
@@ -92,7 +103,10 @@ void main() {
       final notifJson = notif.toJson();
       final notifRestored = SenderNotification.fromJson(notifJson);
       expect(notifRestored.id, equals('N-19'));
-      expect(notifRestored.type, equals(SenderNotificationType.parcelDelivered));
+      expect(
+        notifRestored.type,
+        equals(SenderNotificationType.parcelDelivered),
+      );
 
       // SenderDeliveryRating
       final rating = SenderDeliveryRating(
@@ -124,18 +138,44 @@ void main() {
       expect(error.errorMessage, equals('API Error'));
     });
 
-    test('RemoteSenderRepository throws UnimplementedError cleanly for all 9 methods', () {
-      final remoteRepo = RemoteSenderRepository();
+    test(
+      'RemoteSenderRepository throws UnimplementedError cleanly for all 9 methods',
+      () {
+        final remoteRepo = RemoteSenderRepository();
 
-      expect(() => remoteRepo.getBookings(), throwsUnimplementedError);
-      expect(() => remoteRepo.getBookingDetails('BKG-1'), throwsUnimplementedError);
-      expect(() => remoteRepo.getNotifications(), throwsUnimplementedError);
-      expect(() => remoteRepo.markNotificationAsRead('N-1'), throwsUnimplementedError);
-      expect(() => remoteRepo.getTracking('BKG-1'), throwsUnimplementedError);
-      expect(() => remoteRepo.getDeliveryCompletion('BKG-1'), throwsUnimplementedError);
-      expect(() => remoteRepo.submitRating(SenderDeliveryRating(id: 'R-1', requestId: 'REQ-1', bookingId: 'BKG-1', travellerName: 'A', submittedAt: DateTime.now())), throwsUnimplementedError);
-      expect(() => remoteRepo.searchTravellers(const SenderSearchQuery()), throwsUnimplementedError);
-    });
+        expect(() => remoteRepo.getBookings(), throwsUnimplementedError);
+        expect(
+          () => remoteRepo.getBookingDetails('BKG-1'),
+          throwsUnimplementedError,
+        );
+        expect(() => remoteRepo.getNotifications(), throwsUnimplementedError);
+        expect(
+          () => remoteRepo.markNotificationAsRead('N-1'),
+          throwsUnimplementedError,
+        );
+        expect(() => remoteRepo.getTracking('BKG-1'), throwsUnimplementedError);
+        expect(
+          () => remoteRepo.getDeliveryCompletion('BKG-1'),
+          throwsUnimplementedError,
+        );
+        expect(
+          () => remoteRepo.submitRating(
+            SenderDeliveryRating(
+              id: 'R-1',
+              requestId: 'REQ-1',
+              bookingId: 'BKG-1',
+              travellerName: 'A',
+              submittedAt: DateTime.now(),
+            ),
+          ),
+          throwsUnimplementedError,
+        );
+        expect(
+          () => remoteRepo.searchTravellers(const SenderSearchQuery()),
+          throwsUnimplementedError,
+        );
+      },
+    );
 
     test('SenderService correctly injects repository via factory', () {
       final service1 = SenderService();
@@ -148,7 +188,9 @@ void main() {
   });
 
   group('Phase 19 End-to-End Screen Navigation & UI Hardening', () {
-    testWidgets('SenderDashboardScreen renders and navigates safely', (tester) async {
+    testWidgets('SenderDashboardScreen renders and navigates safely', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
@@ -156,7 +198,9 @@ void main() {
       expect(find.text('TRAVGO'), findsOneWidget);
     });
 
-    testWidgets('MyBookingsScreen renders booking items safely', (tester) async {
+    testWidgets('MyBookingsScreen renders booking items safely', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
@@ -164,57 +208,90 @@ void main() {
       expect(find.text('My Bookings'), findsOneWidget);
     });
 
-    testWidgets('SenderBookingDetailScreen renders booking details cleanly', (tester) async {
+    testWidgets('SenderBookingDetailScreen renders booking details cleanly', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
       final booking = SenderMockBookingData.getMockBookings().first;
-      await tester.pumpWidget(MaterialApp(home: SenderBookingDetailScreen(booking: booking)));
+      await tester.pumpWidget(
+        MaterialApp(home: SenderBookingDetailScreen(booking: booking)),
+      );
       expect(find.text('Booking Details'), findsOneWidget);
     });
 
-    testWidgets('SenderTrackingScreen renders live tracking timeline safely', (tester) async {
+    testWidgets('SenderTrackingScreen renders live tracking timeline safely', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const MaterialApp(home: SenderTrackingScreen(bookingId: 'BKG-103')));
+      await tester.pumpWidget(
+        const MaterialApp(home: SenderTrackingScreen(bookingId: 'BKG-103')),
+      );
       expect(find.text('Live Tracking'), findsOneWidget);
     });
 
-    testWidgets('SenderNotificationsScreen renders notification list safely', (tester) async {
+    testWidgets('SenderNotificationsScreen renders notification list safely', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const MaterialApp(home: SenderNotificationsScreen()));
+      await tester.pumpWidget(
+        const MaterialApp(home: SenderNotificationsScreen()),
+      );
       expect(find.text('Notifications'), findsOneWidget);
     });
 
-    testWidgets('SenderDeliveryCompletionScreen renders completion details safely', (tester) async {
+    testWidgets(
+      'SenderDeliveryCompletionScreen renders completion details safely',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(800, 1800));
+        addTearDown(() async => await tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: SenderDeliveryCompletionScreen(bookingId: 'BKG-105'),
+          ),
+        );
+        expect(find.text('Delivery Completed'), findsOneWidget);
+      },
+    );
+
+    testWidgets('SenderProofViewerScreen renders digital signature safely', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const MaterialApp(home: SenderDeliveryCompletionScreen(bookingId: 'BKG-105')));
-      expect(find.text('Delivery Completed'), findsOneWidget);
-    });
-
-    testWidgets('SenderProofViewerScreen renders digital signature safely', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(800, 1800));
-      addTearDown(() async => await tester.binding.setSurfaceSize(null));
-
-      final completion = SenderMockDeliveryCompletionData.getCompletionForBooking('BKG-105');
-      await tester.pumpWidget(MaterialApp(home: SenderProofViewerScreen(completion: completion)));
+      final completion =
+          SenderMockDeliveryCompletionData.getCompletionForBooking('BKG-105');
+      await tester.pumpWidget(
+        MaterialApp(home: SenderProofViewerScreen(completion: completion)),
+      );
       expect(find.text('Proof of Delivery'), findsOneWidget);
     });
 
-    testWidgets('SenderDeliveryFeedbackScreen renders rate delivery interface safely', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(800, 1800));
-      addTearDown(() async => await tester.binding.setSurfaceSize(null));
+    testWidgets(
+      'SenderDeliveryFeedbackScreen renders rate delivery interface safely',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(800, 1800));
+        addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const MaterialApp(home: SenderDeliveryFeedbackScreen(bookingId: 'BKG-105')));
-      expect(find.text('Rate Your Delivery'), findsOneWidget);
-    });
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: SenderDeliveryFeedbackScreen(bookingId: 'BKG-105'),
+          ),
+        );
+        expect(find.text('Rate & Review'), findsOneWidget);
+      },
+    );
 
-    testWidgets('SenderDeliveryStatusScreen renders status timeline cleanly', (tester) async {
+    testWidgets('SenderDeliveryStatusScreen renders status timeline cleanly', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
@@ -228,7 +305,9 @@ void main() {
         deliveryLocation: 'Chennai',
       );
 
-      await tester.pumpWidget(MaterialApp(home: SenderDeliveryStatusScreen(statusItem: statusItem)));
+      await tester.pumpWidget(
+        MaterialApp(home: SenderDeliveryStatusScreen(statusItem: statusItem)),
+      );
       expect(find.text('Delivery Status'), findsOneWidget);
     });
   });
