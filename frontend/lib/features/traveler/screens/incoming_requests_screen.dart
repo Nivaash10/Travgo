@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../sender/data/sender_mock_booking_data.dart';
+import '../../sender/models/sender_delivery_status.dart';
 import '../models/parcel_request.dart';
 import '../repository/parcel_request_repository.dart';
 import '../repository/traveler_trip_repository.dart';
@@ -147,6 +149,12 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
             onPressed: () {
               Navigator.pop(context);
               ParcelRequestRepository().updateRequestStatus(request.id, 'ACCEPTED');
+              SenderMockBookingData.updateBookingStatus('BKG-101', SenderDeliveryStatus.accepted);
+              for (var b in SenderMockBookingData.getMockBookings()) {
+                if (b.status == SenderDeliveryStatus.pending) {
+                  SenderMockBookingData.updateBookingStatus(b.id, SenderDeliveryStatus.accepted);
+                }
+              }
               if (mounted) {
                 ScaffoldMessenger.of(context).clearSnackBars();
                 ScaffoldMessenger.of(context).showSnackBar(

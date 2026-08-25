@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../common/screens/role_selection_screen.dart';
+import '../../tracking/screens/tracking_screen.dart';
 import '../data/sender_mock_booking_data.dart';
 import '../data/sender_mock_notification_data.dart';
 import '../widgets/sender_booking_card.dart';
@@ -171,6 +173,41 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
               ),
               Row(
                 children: [
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RoleSelectionScreen(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFC7D2FE)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.swap_horiz, size: 14, color: Color(0xFF4F46E5)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Switch Role',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4F46E5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   _buildNotificationIcon(),
                   const SizedBox(width: 8),
                   GestureDetector(
@@ -358,7 +395,14 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
                     child: _QuickActionCard(
                       icon: Icons.alt_route,
                       label: 'Track Parcel',
-                      onTap: () => _showFeatureNotice('Track Parcel'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TrackingScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],

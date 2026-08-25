@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../common/screens/role_selection_screen.dart';
 
 class TravelerHeader extends StatelessWidget {
   final VoidCallback onProfileTap;
@@ -93,9 +94,44 @@ class TravelerHeader extends StatelessWidget {
               ],
             ),
 
-            // Right: Actions (Notification + Profile Avatar)
+            // Right: Actions (Switch Role + Notification + Profile Avatar)
             Row(
               children: [
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RoleSelectionScreen(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFDBEAFE)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.swap_horiz, size: 14, color: primaryColor),
+                        SizedBox(width: 4),
+                        Text(
+                          'Switch Role',
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 // Notification Button
                 Material(
                   color: Colors.transparent,

@@ -6,10 +6,23 @@ import '../models/sender_traveller_match.dart';
 
 /// Isolated frontend-only mock dataset for Sender bookings.
 class SenderMockBookingData {
+  static final List<SenderBooking> _dynamicBookings = [];
+
+  static void addBooking(SenderBooking booking) {
+    _dynamicBookings.insert(0, booking);
+  }
+
+  static void updateBookingStatus(String bookingId, SenderDeliveryStatus status) {
+    final idx = _dynamicBookings.indexWhere((b) => b.id == bookingId);
+    if (idx != -1) {
+      _dynamicBookings[idx] = _dynamicBookings[idx].copyWith(status: status);
+    }
+  }
+
   static List<SenderBooking> getMockBookings() {
     final now = DateTime.now();
 
-    return [
+    final defaultBookings = [
       // 1. Pending Booking
       SenderBooking(
         id: 'BKG-101',
@@ -211,5 +224,7 @@ class SenderMockBookingData {
         ),
       ),
     ];
+
+    return [..._dynamicBookings, ...defaultBookings];
   }
 }

@@ -10,6 +10,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart';
+import '../../sender/data/sender_mock_booking_data.dart';
+import '../../sender/models/sender_delivery_status.dart';
 import '../../tracking/services/location_service.dart';
 import '../models/otp_model.dart';
 import '../services/otp_service.dart';
@@ -99,6 +101,12 @@ class _DeliveryOtpScreenState extends State<DeliveryOtpScreen> {
     }
     final result = _service.verifyDeliveryOtp(entered);
     if (result == OtpVerifyResult.success) {
+      SenderMockBookingData.updateBookingStatus('BKG-101', SenderDeliveryStatus.delivered);
+      for (var b in SenderMockBookingData.getMockBookings()) {
+        if (b.status == SenderDeliveryStatus.pickedUp || b.status == SenderDeliveryStatus.inTransit) {
+          SenderMockBookingData.updateBookingStatus(b.id, SenderDeliveryStatus.delivered);
+        }
+      }
       try {
         final pos = await LocationService().getCurrentLocation();
         _service.deliveryLocation = LatLng(pos.latitude, pos.longitude);

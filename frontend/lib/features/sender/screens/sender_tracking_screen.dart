@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../tracking/screens/tracking_screen.dart';
 import '../data/sender_mock_tracking_data.dart';
 import '../models/sender_tracking.dart';
 import '../widgets/sender_tracking_route.dart';
@@ -198,6 +199,36 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
               currentLocation: _tracking.currentLocation,
               estimatedArrival: _tracking.estimatedArrival,
               progressPercentage: _tracking.progressPercentage,
+            ),
+            const SizedBox(height: 12),
+
+            // Live OSRM Map Button
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TrackingScreen(
+                      parcelId: _tracking.bookingId,
+                      sourceName: _tracking.source,
+                      destinationName: _tracking.destination,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.map_rounded),
+              label: const Text(
+                'Open Live Satellite Map & OSRM Route',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
 

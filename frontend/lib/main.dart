@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'config/supabase_config.dart';
+import 'features/common/screens/role_selection_screen.dart';
 import 'features/sender/screens/sender_dashboard_screen.dart';
 
 Future<void> main() async {
@@ -7,11 +8,16 @@ Future<void> main() async {
 
   await SupabaseConfig.initialize();
 
-  runApp(const TravgoApp());
+  runApp(const TravgoApp(initialHome: RoleSelectionScreen()));
 }
 
 class TravgoApp extends StatelessWidget {
-  const TravgoApp({super.key});
+  final Widget initialHome;
+
+  const TravgoApp({
+    super.key,
+    this.initialHome = const SenderDashboardScreen(),
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +77,8 @@ class TravgoApp extends StatelessWidget {
         ),
       ),
       themeMode: ThemeMode.system,
-      home: const SenderDashboardScreen(),
+      home: initialHome,
     );
   }
 }
+

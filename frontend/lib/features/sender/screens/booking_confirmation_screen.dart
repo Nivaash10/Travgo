@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../otp/services/otp_service.dart';
+import '../../traveler/models/parcel_request.dart';
+import '../../traveler/repository/parcel_request_repository.dart';
+import '../data/sender_mock_booking_data.dart';
+import '../models/sender_booking.dart';
 import '../models/sender_delivery_request.dart';
 import '../models/sender_delivery_status.dart';
 import 'sender_delivery_status_screen.dart';
@@ -8,10 +13,46 @@ import 'sender_payment_screen.dart';
 class BookingConfirmationScreen extends StatelessWidget {
   final SenderDeliveryRequest request;
 
-  const BookingConfirmationScreen({
+  BookingConfirmationScreen({
     super.key,
     required this.request,
-  });
+  }) {
+    _syncRequest();
+  }
+
+  void _syncRequest() {
+    final reqId = 'REQ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final bkgId = 'BKG-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+
+    ParcelRequestRepository().addRequest(
+      ParcelRequest(
+        id: reqId,
+        tripId: 'trip_1',
+        senderName: 'Ramesh Kumar',
+        parcelDescription: request.parcelDescription,
+        parcelWeight: request.parcelWeightKg,
+        source: request.searchQuery.source,
+        destination: request.searchQuery.destination,
+        price: request.traveller.priceRupees,
+        status: 'PENDING',
+      ),
+    );
+
+    SenderMockBookingData.addBooking(
+      SenderBooking(
+        id: bkgId,
+        request: request,
+        status: SenderDeliveryStatus.pending,
+        createdAt: DateTime.now(),
+        deliveryPrice: request.traveller.priceRupees,
+        pickupLocation: '${request.searchQuery.source} Central',
+        deliveryLocation: '${request.searchQuery.destination} Station',
+        travellerName: request.traveller.travellerName,
+      ),
+    );
+
+    OtpService.instance.generatePickupOtp();
+  }
 
   void _onViewStatusPressed(BuildContext context) {
     final statusItem = SenderDeliveryStatusItem(
@@ -153,7 +194,57 @@ class BookingConfirmationScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+
+              // Pickup Verification OTP Card
+              Card(
+                color: const Color(0xFFEEF2FF),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Color(0xFFC7D2FE)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.key, color: Color(0xFF4F46E5), size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Pickup Verification OTP',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4F46E5),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              OtpService.instance.generatePickupOtp().otp,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 4,
+                                color: Color(0xFF1E1B4B),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Share this 4-digit code with ${traveller.travellerName} upon parcel pickup',
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF4338CA)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
 
               // Proceed to Payment Button
               SizedBox(

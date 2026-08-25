@@ -52,6 +52,10 @@ class ParcelRequestRepository {
     return _requests.length;
   }
 
+  void addRequest(ParcelRequest request) {
+    _requests.insert(0, request);
+  }
+
   void updateRequestStatus(String requestId, String newStatus) {
     final index = _requests.indexWhere((req) => req.id == requestId);
     if (index != -1) {

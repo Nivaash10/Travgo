@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../otp/services/otp_service.dart';
 import '../models/sender_payment.dart';
 
 /// Screen displaying the result of a Sender payment transaction (Success or Failure).
@@ -123,6 +124,54 @@ class SenderPaymentResultScreen extends StatelessWidget {
 
               // Actions
               if (isSuccess) ...[
+                Card(
+                  color: const Color(0xFFEEF2FF),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Color(0xFFC7D2FE)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.key, color: Color(0xFF4F46E5), size: 28),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Pickup Verification OTP',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF4F46E5),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                OtpService.instance.generatePickupOtp().otp,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 4,
+                                  color: Color(0xFF1E1B4B),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Share code with ${travellerName ?? "traveller"} upon parcel pickup',
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF4338CA)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
