@@ -10,7 +10,9 @@ class SenderService {
   final SenderRepository repository;
   final SenderApiService apiService;
 
-  SenderService({SenderRepository? repository, SenderApiService? apiService})
-    : repository = repository ?? SenderRepositoryFactory.createRepository(),
-      apiService = apiService ?? const SenderApiService();
+  SenderService({
+    SenderRepository? repository,
+    SenderApiService? apiService,
+  })  : repository = repository ?? SenderRepositoryFactory.createRepository(),
+        apiService = apiService ?? const SenderApiService();
 }

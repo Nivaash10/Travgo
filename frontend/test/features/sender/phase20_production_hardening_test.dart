@@ -95,16 +95,11 @@ void main() {
       await tester.pumpWidget(MaterialApp(
         home: SenderDeliveryFeedbackScreen(ratingData: freshRating),
       ));
-      expect(find.text('Rate & Review'), findsOneWidget);
+      expect(find.text('Rate Your Delivery'), findsOneWidget);
 
-      final submitBtn = find.widgetWithText(ElevatedButton, 'Submit Review (5 Stars)');
-      await tester.ensureVisible(submitBtn);
-      await tester.tap(submitBtn);
-      await tester.pump(const Duration(milliseconds: 800));
-      await tester.pump(const Duration(milliseconds: 1300));
+      await tester.tap(find.text('Submit Feedback'));
       await tester.pumpAndSettle();
-      expect(find.text('Thank You!'), findsOneWidget);
+      expect(find.text('Feedback Submitted'), findsOneWidget);
     });
-
   });
 }

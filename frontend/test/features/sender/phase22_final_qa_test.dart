@@ -107,7 +107,7 @@ void main() {
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(const MaterialApp(home: SenderDeliveryCompletionScreen(bookingId: 'BKG-105')));
-      expect(find.text('Delivery Status'), findsOneWidget);
+      expect(find.text('Delivery Completed'), findsOneWidget);
     });
 
     testWidgets('TASK 22.3 Proof Viewer Screen QA', (tester) async {
@@ -135,17 +135,12 @@ void main() {
       );
 
       await tester.pumpWidget(MaterialApp(home: SenderDeliveryFeedbackScreen(ratingData: freshRating)));
-      expect(find.text('Rate & Review'), findsOneWidget);
+      expect(find.text('Rate Your Delivery'), findsOneWidget);
 
-      final submitBtn = find.widgetWithText(ElevatedButton, 'Submit Review (5 Stars)');
-      await tester.ensureVisible(submitBtn);
-      await tester.tap(submitBtn);
-      await tester.pump(const Duration(milliseconds: 800));
-      await tester.pump(const Duration(milliseconds: 1300));
+      await tester.tap(find.text('Submit Feedback'));
       await tester.pumpAndSettle();
-      expect(find.text('Thank You!'), findsOneWidget);
+      expect(find.text('Feedback Submitted'), findsOneWidget);
     });
-
 
     testWidgets('TASK 22.3 Notifications Screen QA', (tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));

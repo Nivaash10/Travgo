@@ -111,7 +111,8 @@ void main() {
         ),
       );
 
-      expect(find.text('Live Tracking'), findsOneWidget);
+     expect(find.text('Live Tracking'), findsOneWidget);
+     expect(find.text('Picked up parcel'), findsOneWidget);
     });
 
     testWidgets('SenderDeliveryCompletionScreen renders safely with proof disabled', (tester) async {
@@ -161,18 +162,20 @@ void main() {
         ),
       );
 
-      expect(find.text('Rate & Review'), findsOneWidget);
+expect(find.text('Rate & Review'), findsOneWidget);
 
-      final submitBtn = find.widgetWithText(ElevatedButton, 'Submit Review (4 Stars)');
-      await tester.ensureVisible(submitBtn);
-      await tester.tap(submitBtn);
-      await tester.pump(const Duration(milliseconds: 800));
-      await tester.pump(const Duration(milliseconds: 1300));
+    final submitBtn = find.widgetWithText(
+    ElevatedButton,
+    'Submit Review (4 Stars)',
+    );
+    await tester.ensureVisible(submitBtn);
+    await tester.tap(submitBtn);
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pump(const Duration(milliseconds: 1300));  
       await tester.pumpAndSettle();
 
       expect(find.text('Thank You!'), findsOneWidget);
     });
-
 
     testWidgets('SenderBookingDetailScreen renders with all delivery status states', (tester) async {
       final booking = SenderMockBookingData.getMockBookings().first;

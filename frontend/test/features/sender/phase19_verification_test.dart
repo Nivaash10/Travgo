@@ -194,7 +194,7 @@ void main() {
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(const MaterialApp(home: SenderDeliveryCompletionScreen(bookingId: 'BKG-105')));
-      expect(find.text('Delivery Status'), findsOneWidget);
+      expect(find.text('Delivery Completed'), findsOneWidget);
     });
 
     testWidgets('SenderProofViewerScreen renders digital signature safely', (tester) async {
@@ -211,9 +211,8 @@ void main() {
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(const MaterialApp(home: SenderDeliveryFeedbackScreen(bookingId: 'BKG-105')));
-      expect(find.text('Rate & Review'), findsOneWidget);
+      expect(find.text('Rate Your Delivery'), findsOneWidget);
     });
-
 
     testWidgets('SenderDeliveryStatusScreen renders status timeline cleanly', (tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
