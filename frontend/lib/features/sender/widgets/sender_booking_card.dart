@@ -126,7 +126,7 @@ class SenderBookingCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'â‚¹${booking.deliveryPrice.toStringAsFixed(0)}',
+                        '₹${booking.deliveryPrice.toStringAsFixed(0)}',
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary,

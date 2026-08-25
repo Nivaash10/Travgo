@@ -123,7 +123,7 @@ class SenderDeliveryRequestCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'â‚¹${traveller.priceRupees.toStringAsFixed(0)}',
+                        '₹${traveller.priceRupees.toStringAsFixed(0)}',
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Reusable rating badge widget displaying "â˜… 4.5" or "Not Rated".
+/// Reusable rating badge widget displaying "★ 4.5" or "Not Rated".
 class SenderRatingBadge extends StatelessWidget {
   final double rating;
   final bool isSubmitted;
@@ -34,7 +34,7 @@ class SenderRatingBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            hasRating ? 'â˜… ${rating.toStringAsFixed(1)}' : 'Not Rated',
+            hasRating ? '★ ${rating.toStringAsFixed(1)}' : 'Not Rated',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,

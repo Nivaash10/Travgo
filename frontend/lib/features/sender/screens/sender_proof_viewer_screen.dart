@@ -19,7 +19,7 @@ class SenderProofViewerScreen extends StatelessWidget {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     final minuteStr = date.minute.toString().padLeft(2, '0');
-    return '${date.day} ${months[date.month - 1]} ${date.year} â€¢ ${date.hour}:$minuteStr';
+    return '${date.day} ${months[date.month - 1]} ${date.year} • ${date.hour}:$minuteStr';
   }
 
   @override
@@ -147,7 +147,7 @@ class SenderProofViewerScreen extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          'Signature: ${completion.receiverName ?? "S. Kumar"} âœ“',
+                          'Signature: ${completion.receiverName ?? "S. Kumar"} ✓',
                           style: const TextStyle(
                             fontStyle: FontStyle.italic,
                             fontSize: 18,

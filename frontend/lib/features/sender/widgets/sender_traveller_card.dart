@@ -137,7 +137,7 @@ class SenderTravellerCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'â‚¹${match.priceRupees.toStringAsFixed(0)}',
+                      '₹${match.priceRupees.toStringAsFixed(0)}',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.primary,
@@ -159,7 +159,7 @@ class SenderTravellerCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       match.rating != null
-                          ? 'â˜… ${match.rating!.toStringAsFixed(1)}'
+                          ? '★ ${match.rating!.toStringAsFixed(1)}'
                           : 'No rating',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,

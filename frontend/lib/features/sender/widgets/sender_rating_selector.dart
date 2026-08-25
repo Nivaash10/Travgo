@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Reusable 1â€“5 star rating selector component for Senders.
+/// Reusable 1–5 star rating selector component for Senders.
 class SenderRatingSelector extends StatelessWidget {
   final double currentRating;
   final ValueChanged<double>? onRatingChanged;

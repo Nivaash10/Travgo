@@ -59,7 +59,7 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
       'Dec',
     ];
     final minuteStr = time.minute.toString().padLeft(2, '0');
-    return '${time.day} ${months[time.month - 1]} â€¢ ${time.hour}:$minuteStr';
+    return '${time.day} ${months[time.month - 1]} • ${time.hour}:$minuteStr';
   }
 
   Future<void> _handleRefresh() async {

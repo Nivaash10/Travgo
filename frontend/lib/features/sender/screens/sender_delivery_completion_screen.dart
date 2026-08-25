@@ -395,7 +395,7 @@ class _SenderDeliveryCompletionScreenState
                             ),
                             _RowLine(
                               label: 'Route',
-                              value: 'Coimbatore â†’ ${_completion.destination}',
+                              value: 'Coimbatore → ${_completion.destination}',
                             ),
                             _RowLine(
                               label: 'Delivered Item',
@@ -418,7 +418,7 @@ class _SenderDeliveryCompletionScreenState
                                     ),
                                   ),
                                   Text(
-                                    'â‚¹220 Released',
+                                    '₹220 Released',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
@@ -541,7 +541,7 @@ class _SenderDeliveryCompletionScreenState
                               bookingId: _completion.bookingId,
                               requestId: _completion.requestId,
                               travellerName: _completion.travellerName,
-                              route: 'Coimbatore â†’ ${_completion.destination}',
+                              route: 'Coimbatore → ${_completion.destination}',
                             ),
                           ),
                         );

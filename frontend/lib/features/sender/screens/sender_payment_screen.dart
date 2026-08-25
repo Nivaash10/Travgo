@@ -56,12 +56,12 @@ class _SenderPaymentScreenState extends State<SenderPaymentScreen> {
   String get _route =>
       widget.booking?.request.traveller.route ??
       widget.request?.traveller.route ??
-      'Coimbatore â†’ Chennai';
+      'Coimbatore → Chennai';
 
   String get _travelDateTime =>
       widget.booking?.request.traveller.travelDateTime ??
       widget.request?.traveller.travelDateTime ??
-      'Today â€¢ 8:30 AM';
+      'Today • 8:30 AM';
 
   double get _parcelWeight =>
       widget.booking?.request.parcelWeightKg ??
@@ -261,7 +261,7 @@ class _SenderPaymentScreenState extends State<SenderPaymentScreen> {
                               children: [
                                 Text('Delivery Price',
                                     style: TextStyle(color: Colors.grey[700])),
-                                Text('â‚¹${_basePrice.toStringAsFixed(0)}',
+                                Text('₹${_basePrice.toStringAsFixed(0)}',
                                     style: const TextStyle(fontWeight: FontWeight.w600)),
                               ],
                             ),
@@ -271,7 +271,7 @@ class _SenderPaymentScreenState extends State<SenderPaymentScreen> {
                               children: [
                                 Text('Platform Fee (Mock)',
                                     style: TextStyle(color: Colors.grey[700])),
-                                Text('â‚¹${_platformFee.toStringAsFixed(0)}',
+                                Text('₹${_platformFee.toStringAsFixed(0)}',
                                     style: const TextStyle(fontWeight: FontWeight.w600)),
                               ],
                             ),
@@ -286,7 +286,7 @@ class _SenderPaymentScreenState extends State<SenderPaymentScreen> {
                                   ),
                                 ),
                                 Text(
-                                  'â‚¹${_totalAmount.toStringAsFixed(0)}',
+                                  '₹${_totalAmount.toStringAsFixed(0)}',
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: theme.colorScheme.primary,
@@ -310,7 +310,7 @@ class _SenderPaymentScreenState extends State<SenderPaymentScreen> {
                         ),
                       ),
                       child: Text(
-                        'Pay â‚¹${_totalAmount.toStringAsFixed(0)}',
+                        'Pay ₹${_totalAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),

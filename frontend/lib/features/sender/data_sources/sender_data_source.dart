@@ -121,8 +121,8 @@ class SenderMockDataSource implements SenderDataSource {
       {
         'travellerName': 'Arun',
         'isVerified': true,
-        'route': 'Coimbatore â†’ Chennai',
-        'travelDateTime': '25 Aug 2026 â€¢ 8:30 AM',
+        'route': 'Coimbatore → Chennai',
+        'travelDateTime': '25 Aug 2026 • 8:30 AM',
         'availableCapacityKg': 5.0,
         'priceRupees': 100.0,
         'rating': 4.7,
@@ -130,8 +130,8 @@ class SenderMockDataSource implements SenderDataSource {
       {
         'travellerName': 'Bala',
         'isVerified': true,
-        'route': 'Coimbatore â†’ Chennai',
-        'travelDateTime': '25 Aug 2026 â€¢ 2:00 PM',
+        'route': 'Coimbatore → Chennai',
+        'travelDateTime': '25 Aug 2026 • 2:00 PM',
         'availableCapacityKg': 8.0,
         'priceRupees': 150.0,
         'rating': 4.9,

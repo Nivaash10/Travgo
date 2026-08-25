@@ -180,7 +180,7 @@ class _ParcelDetailsScreenState extends State<ParcelDetailsScreen> {
                             ),
                           ),
                           Text(
-                            'Price: â‚¹${traveller.priceRupees.toStringAsFixed(0)}',
+                            'Price: ₹${traveller.priceRupees.toStringAsFixed(0)}',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.primary,

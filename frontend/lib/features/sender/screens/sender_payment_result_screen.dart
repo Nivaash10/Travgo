@@ -23,7 +23,7 @@ class SenderPaymentResultScreen extends StatelessWidget {
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    return '${date.day} ${months[date.month - 1]} ${date.year} â€¢ ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    return '${date.day} ${months[date.month - 1]} ${date.year} • ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -92,7 +92,7 @@ class SenderPaymentResultScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       _SummaryRow(
                         label: isSuccess ? 'Amount Paid' : 'Amount',
-                        value: 'â‚¹${payment.amountRupees.toStringAsFixed(0)}',
+                        value: '₹${payment.amountRupees.toStringAsFixed(0)}',
                         isBoldValue: true,
                         valueColor: isSuccess
                             ? Theme.of(context).colorScheme.primary

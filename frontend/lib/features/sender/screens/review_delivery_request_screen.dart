@@ -105,7 +105,7 @@ class ReviewDeliveryRequestScreen extends StatelessWidget {
                   _DetailRow(
                     label: 'Rating',
                     value: traveller.rating != null
-                        ? 'â˜… ${traveller.rating!.toStringAsFixed(1)}'
+                        ? '★ ${traveller.rating!.toStringAsFixed(1)}'
                         : 'No rating',
                   ),
                 ],
@@ -144,7 +144,7 @@ class ReviewDeliveryRequestScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'â‚¹${traveller.priceRupees.toStringAsFixed(0)}',
+                        '₹${traveller.priceRupees.toStringAsFixed(0)}',
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary,

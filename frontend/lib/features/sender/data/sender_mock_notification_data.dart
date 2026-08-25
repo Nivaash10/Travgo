@@ -15,7 +15,7 @@ class SenderMockNotificationData {
         type: SenderNotificationType.requestSubmitted,
         isRead: false,
         requestId: 'REQ-101',
-        route: 'Coimbatore â†’ Chennai',
+        route: 'Coimbatore → Chennai',
         travellerName: 'Arun',
       ),
 
@@ -28,7 +28,7 @@ class SenderMockNotificationData {
         type: SenderNotificationType.travellerAccepted,
         isRead: false,
         requestId: 'REQ-102',
-        route: 'Coimbatore â†’ Chennai',
+        route: 'Coimbatore → Chennai',
         travellerName: 'Arun',
       ),
 
@@ -41,7 +41,7 @@ class SenderMockNotificationData {
         type: SenderNotificationType.pickupReminder,
         isRead: false,
         requestId: 'REQ-103',
-        route: 'Coimbatore â†’ Bangalore',
+        route: 'Coimbatore → Bangalore',
         travellerName: 'Karthik',
       ),
 
@@ -54,7 +54,7 @@ class SenderMockNotificationData {
         type: SenderNotificationType.parcelPickedUp,
         isRead: true,
         requestId: 'REQ-103',
-        route: 'Coimbatore â†’ Bangalore',
+        route: 'Coimbatore → Bangalore',
         travellerName: 'Karthik',
       ),
 
@@ -67,7 +67,7 @@ class SenderMockNotificationData {
         type: SenderNotificationType.parcelDelivered,
         isRead: true,
         requestId: 'REQ-104',
-        route: 'Chennai â†’ Coimbatore',
+        route: 'Chennai → Coimbatore',
         travellerName: 'Ravi',
       ),
     ];

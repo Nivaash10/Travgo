@@ -120,16 +120,16 @@ class _SenderNotificationsScreenState extends State<SenderNotificationsScreen> {
       statusMessage: n.message,
       request: SenderDeliveryRequest(
         searchQuery: SenderSearchQuery(
-          source: n.route?.split('â†’').first.trim() ?? 'Coimbatore',
-          destination: n.route?.split('â†’').last.trim() ?? 'Chennai',
+          source: n.route?.split('→').first.trim() ?? 'Coimbatore',
+          destination: n.route?.split('→').last.trim() ?? 'Chennai',
           date: n.timestamp,
           parcelWeightKg: 2.5,
         ),
         traveller: SenderTravellerMatch(
           travellerName: n.travellerName ?? 'Arun',
           isVerified: true,
-          route: n.route ?? 'Coimbatore â†’ Chennai',
-          travelDateTime: 'Today â€¢ 8:30 AM',
+          route: n.route ?? 'Coimbatore → Chennai',
+          travelDateTime: 'Today • 8:30 AM',
           availableCapacityKg: 5.0,
           priceRupees: 100.0,
           rating: 4.7,

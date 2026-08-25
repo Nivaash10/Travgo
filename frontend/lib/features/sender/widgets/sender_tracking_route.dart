@@ -68,7 +68,7 @@ class SenderTrackingRoute extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'LIVE GPS â€¢ $speedKmH km/h',
+                      'LIVE GPS • $speedKmH km/h',
                       style: const TextStyle(
                         color: Color(0xFFF1F5F9),
                         fontSize: 11,

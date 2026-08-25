@@ -141,7 +141,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                           Text(
-                            'â‚¹${traveller.priceRupees.toStringAsFixed(0)}',
+                            '₹${traveller.priceRupees.toStringAsFixed(0)}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: theme.colorScheme.primary,

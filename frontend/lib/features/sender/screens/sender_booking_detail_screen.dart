@@ -269,7 +269,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                       if (traveller.rating != null)
                         _DetailRow(
                           label: 'Rating',
-                          value: 'â˜… ${traveller.rating!.toStringAsFixed(1)}',
+                          value: '★ ${traveller.rating!.toStringAsFixed(1)}',
                         ),
                       _DetailRow(label: 'Route', value: traveller.route),
                       _DetailRow(
@@ -360,7 +360,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                       ),
                       _DetailRow(
                         label: 'Delivery Price',
-                        value: 'â‚¹${_booking.deliveryPrice.toStringAsFixed(0)}',
+                        value: '₹${_booking.deliveryPrice.toStringAsFixed(0)}',
                       ),
                     ],
                   ),
@@ -396,7 +396,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                       const Divider(height: 20),
                       _DetailRow(
                         label: 'Amount',
-                        value: 'â‚¹${_payment.amountRupees.toStringAsFixed(0)}',
+                        value: '₹${_payment.amountRupees.toStringAsFixed(0)}',
                       ),
                       _DetailRow(
                         label: 'Payment Method',
@@ -545,7 +545,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                             bookingId: _booking.id,
                             travellerName: _booking.travellerName,
                             route:
-                                '${_booking.request.searchQuery.source} â†’ ${_booking.request.searchQuery.destination}',
+                                '${_booking.request.searchQuery.source} → ${_booking.request.searchQuery.destination}',
                           ),
                         ),
                       );

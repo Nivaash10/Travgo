@@ -227,7 +227,7 @@ class _SenderDeliveryFeedbackScreenState
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Delivered: ${_rating.route ?? "Coimbatore â†’ Chennai"}',
+                              'Delivered: ${_rating.route ?? "Coimbatore → Chennai"}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF64748B),
@@ -470,7 +470,7 @@ class _SenderDeliveryFeedbackScreenState
                                             ),
                                           ),
                                           child: Text(
-                                            amount == 0 ? 'No Tip' : 'â‚¹$amount',
+                                            amount == 0 ? 'No Tip' : '₹$amount',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                               fontSize: 12,
