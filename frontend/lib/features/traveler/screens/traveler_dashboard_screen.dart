@@ -31,11 +31,11 @@ class _TravelerDashboardScreenState extends State<TravelerDashboardScreen> {
 
   int _currentBottomNavIndex = 0;
 
-  void _showPlaceholderSnackBar(BuildContext context, String featureTitle) {
+  void _showFeatureSnackBar(BuildContext context, String featureTitle) {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$featureTitle - Coming in future release'),
+        content: Text('$featureTitle selected'),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -245,7 +245,7 @@ class _TravelerDashboardScreenState extends State<TravelerDashboardScreen> {
           // 1. Top Header
           TravelerHeader(
             onProfileTap: _navigateToProfile,
-            onNotificationTap: () => _showPlaceholderSnackBar(context, 'Notifications'),
+            onNotificationTap: () => _showFeatureSnackBar(context, 'Notifications'),
           ),
 
           // Main Scrollable Content

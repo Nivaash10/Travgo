@@ -124,6 +124,13 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
               'Sender: ${request.senderName} • ${request.parcelWeight} kg',
               style: const TextStyle(fontSize: 13, color: subtitleColor),
             ),
+            if (request.receiverName != null && request.receiverName!.trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Receiver: ${request.receiverName}',
+                style: const TextStyle(fontSize: 13, color: subtitleColor),
+              ),
+            ],
             const SizedBox(height: 4),
             Text(
               'Price: ₹${request.price.toInt()}',

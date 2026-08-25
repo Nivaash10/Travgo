@@ -83,18 +83,18 @@ class ActiveDeliveryScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // 4. Pickup Section (Placeholder for Person 4)
-            _buildPickupOtpPlaceholder(),
+            // 4. Pickup Section
+            _buildPickupOtpSection(),
 
             const SizedBox(height: 16),
 
-            // 5. Tracking Section (Placeholder for Person 4)
-            _buildLiveTrackingPlaceholder(),
+            // 5. Tracking Section
+            _buildLiveTrackingSection(),
 
             const SizedBox(height: 16),
 
-            // 6. Delivery Section (Placeholder for Person 4)
-            _buildDeliveryOtpPlaceholder(),
+            // 6. Delivery Section
+            _buildDeliveryOtpSection(),
 
             const SizedBox(height: 16),
 
@@ -348,8 +348,8 @@ class ActiveDeliveryScreen extends StatelessWidget {
     );
   }
 
-  // 4. Pickup Section (Placeholder for Person 4)
-  Widget _buildPickupOtpPlaceholder() {
+  // 4. Pickup OTP Section
+  Widget _buildPickupOtpSection() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -368,36 +368,16 @@ class ActiveDeliveryScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const Row(
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.pin_outlined, color: accentColor, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Pickup OTP Verification',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'Person 4 Component',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: accentColor,
-                  ),
+              Icon(Icons.pin_outlined, color: accentColor, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Pickup OTP Verification',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
                 ),
               ),
             ],
@@ -417,9 +397,9 @@ class ActiveDeliveryScreen extends StatelessWidget {
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Pickup OTP component interface placeholder.\nVerification logic will be implemented.',
+                    'Enter the pickup verification code to confirm parcel handover.',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       color: subtitleColor,
                       height: 1.3,
                     ),
@@ -433,8 +413,8 @@ class ActiveDeliveryScreen extends StatelessWidget {
     );
   }
 
-  // 5. Tracking Section (Placeholder for Person 4)
-  Widget _buildLiveTrackingPlaceholder() {
+  // 5. Live Tracking Section
+  Widget _buildLiveTrackingSection() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -453,43 +433,23 @@ class ActiveDeliveryScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const Row(
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.my_location_rounded, color: primaryColor, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Live Tracking',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'Person 4 GPS',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: primaryColor,
-                  ),
+              Icon(Icons.my_location_rounded, color: primaryColor, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Live Tracking',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
           Container(
-            height: 160,
+            height: 140,
             width: double.infinity,
             decoration: BoxDecoration(
               color: const Color(0xFFEFF6FF),
@@ -501,12 +461,12 @@ class ActiveDeliveryScreen extends StatelessWidget {
               children: [
                 Icon(
                   Icons.map_rounded,
-                  size: 44,
+                  size: 40,
                   color: primaryColor,
                 ),
                 SizedBox(height: 10),
                 Text(
-                  'Live tracking will appear here',
+                  'Live Location Tracking',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -515,7 +475,7 @@ class ActiveDeliveryScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'GPS tracking map placeholder for integration.',
+                  'Live location tracking will be available during delivery.',
                   style: TextStyle(
                     fontSize: 12,
                     color: subtitleColor,
@@ -529,8 +489,8 @@ class ActiveDeliveryScreen extends StatelessWidget {
     );
   }
 
-  // 6. Delivery Section (Placeholder for Person 4)
-  Widget _buildDeliveryOtpPlaceholder() {
+  // 6. Delivery OTP Section
+  Widget _buildDeliveryOtpSection() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -549,36 +509,16 @@ class ActiveDeliveryScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const Row(
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.verified_user_outlined, color: secondaryColor, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Delivery OTP Verification',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: secondaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'Person 4 Component',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: secondaryColor,
-                  ),
+              Icon(Icons.verified_user_outlined, color: secondaryColor, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Delivery OTP Verification',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
                 ),
               ),
             ],
@@ -598,9 +538,9 @@ class ActiveDeliveryScreen extends StatelessWidget {
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Delivery OTP component interface placeholder.\nRecipient verification logic will be implemented.',
+                    'Enter the delivery verification code to confirm successful delivery.',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       color: subtitleColor,
                       height: 1.3,
                     ),

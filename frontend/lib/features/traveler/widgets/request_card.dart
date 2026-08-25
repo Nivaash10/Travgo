@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/parcel_request.dart';
+import 'receiver_details_card.dart';
 
 class RequestCard extends StatelessWidget {
   final ParcelRequest request;
@@ -80,53 +81,33 @@ class RequestCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Sender Header & Status Badge Row
+          // Header Row: Card Tag & Status Badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: primaryColor.withValues(alpha: 0.3), width: 1.5),
-                    ),
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: primaryColor.withValues(alpha: 0.1),
-                      child: const Icon(
-                        Icons.person_rounded,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle_rounded, size: 13, color: primaryColor),
+                    SizedBox(width: 6),
+                    Text(
+                      'INCOMING PARCEL REQUEST',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
                         color: primaryColor,
-                        size: 22,
+                        letterSpacing: 0.4,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        request.senderName,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      const Text(
-                        'PARCEL SENDER',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: subtitleColor,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
 
               // Status Badge
@@ -152,90 +133,48 @@ class RequestCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Trust Badge: Matched Journey Indicator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle_rounded, size: 13, color: primaryColor),
-                SizedBox(width: 6),
-                Text(
-                  'MATCHED TO YOUR JOURNEY',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+          // 1. SENDER SECTION
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.3), width: 1.5),
+                ),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: primaryColor.withValues(alpha: 0.1),
+                  child: const Icon(
+                    Icons.person_rounded,
                     color: primaryColor,
-                    letterSpacing: 0.4,
+                    size: 22,
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // 2. Signature TRAVGO Route Visualizer
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Vertical Node Indicator
-              Column(
-                children: [
-                  const SizedBox(height: 3),
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                  Container(
-                    width: 2,
-                    height: 28,
-                    color: primaryColor.withValues(alpha: 0.3),
-                  ),
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: secondaryColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                ],
               ),
-
-              const SizedBox(width: 12),
-
-              // Route Cities
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      request.source,
+                      request.senderName,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: textColor,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 1),
                     Text(
-                      request.destination,
+                      request.senderPhone != null && request.senderPhone!.isNotEmpty
+                          ? 'SENDER • ${request.senderPhone}'
+                          : 'PARCEL SENDER',
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: subtitleColor,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ],
@@ -246,7 +185,7 @@ class RequestCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // 3. Parcel Details & Price Card
+          // 2. PARCEL SECTION
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
@@ -340,7 +279,98 @@ class RequestCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // 4. Interactive Actions Section
+          // 3. RECEIVER SECTION
+          ReceiverDetailsCard(request: request),
+
+          const SizedBox(height: 16),
+
+          // 4. ROUTE SECTION
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'ROUTE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: subtitleColor,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      children: [
+                        const SizedBox(height: 3),
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                        Container(
+                          width: 2,
+                          height: 28,
+                          color: primaryColor.withValues(alpha: 0.3),
+                        ),
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: secondaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            request.source,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            request.destination,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 5. ACTIONS SECTION
           if (isPending) ...[
             Row(
               children: [
