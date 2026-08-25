@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'config/supabase_config.dart';
 import 'features/payment/screens/payment_demo_hub_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await SupabaseConfig.initialize();
+
   runApp(const TravgoApp());
 }
 
@@ -16,9 +21,9 @@ class TravgoApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4F46E5), // Indigo brand color
+          seedColor: const Color(0xFF4F46E5),
           primary: const Color(0xFF4F46E5),
-          secondary: const Color(0xFF0D9488), // Teal escrow guarantee color
+          secondary: const Color(0xFF0D9488),
           surface: Colors.white,
           brightness: Brightness.light,
         ),
@@ -52,7 +57,7 @@ class TravgoApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           centerTitle: false,
           elevation: 0,
-          backgroundColor: Color(0xFF0F172A),
+          backgroundColor: const Color(0xFF0F172A),
           foregroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
         ),
