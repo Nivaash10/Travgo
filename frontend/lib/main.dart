@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'config/supabase_config.dart';
-import 'features/traveler/screens/traveler_dashboard_screen.dart';
+import 'features/sender/screens/sender_dashboard_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,8 +38,8 @@ class TravgoApp extends StatelessWidget {
         cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+            side: BorderSide(color: Color(0xFFE2E8F0)),
           ),
           color: Colors.white,
         ),
@@ -64,14 +64,14 @@ class TravgoApp extends StatelessWidget {
         cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFF334155)),
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+            side: BorderSide(color: Color(0xFF334155)),
           ),
-          color: const Color(0xFF1E293B),
+          color: Color(0xFF1E293B),
         ),
       ),
       themeMode: ThemeMode.system,
-      home: const TravelerDashboardScreen(),
+      home: const SenderDashboardScreen(),
     );
   }
 }
