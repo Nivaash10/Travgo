@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../screens/sender_dashboard_screen.dart';
 import '../screens/my_bookings_screen.dart';
 
+import '../screens/sender_profile_screen.dart';
+
 /// Bottom navigation bar used across Sender screens.
 class SenderBottomNavBar extends StatefulWidget {
   const SenderBottomNavBar({Key? key}) : super(key: key);
@@ -32,9 +34,8 @@ class _SenderBottomNavBarState extends State<SenderBottomNavBar> {
         );
         break;
       case 2:
-        // Placeholder for profile screen.
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile screen not implemented yet.')),
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const SenderProfileScreen()),
         );
         break;
     }

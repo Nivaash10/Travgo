@@ -8,6 +8,7 @@ import 'saved_receivers_screen.dart';
 import 'search_route_screen.dart';
 import 'sender_booking_detail_screen.dart';
 import 'sender_notifications_screen.dart';
+import 'sender_profile_screen.dart';
 
 /// Primary Mobile & Web Dashboard View for Senders in TRAVGO.
 class SenderDashboardScreen extends StatefulWidget {
@@ -26,11 +27,10 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
   final TextEditingController _quickDestinationController =
       TextEditingController(text: 'Chennai');
 
-  @override
-  void dispose() {
-    _quickSourceController.dispose();
-    _quickDestinationController.dispose();
-    super.dispose();
+  void _navigateToProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const SenderProfileScreen()),
+    );
   }
 
   void _navigateToSearchRoute({String? source, String? destination}) {
@@ -75,16 +75,7 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
     );
   }
 
-  void _showFeatureNotice(String featureName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$featureName view active.',
-        ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
+
 
   Widget _buildNotificationIcon() {
     final mockNotifs = SenderMockNotificationData.getMockNotifications();
@@ -286,7 +277,7 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
                     _buildNotificationIcon(),
                     const SizedBox(width: 4),
                     GestureDetector(
-                      onTap: () => _showFeatureNotice('Sender Profile'),
+                      onTap: _navigateToProfile,
                       child: const CircleAvatar(
                         radius: 16,
                         backgroundColor: Color(0xFFEFF6FF),
@@ -483,7 +474,7 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
                       icon: Icons.person_outline_rounded,
                       label: 'Profile',
                       color: const Color(0xFF64748B),
-                      onTap: () => _showFeatureNotice('Sender Profile'),
+                      onTap: _navigateToProfile,
                     ),
                   ),
                 ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/sender_traveller_match.dart';
 
+import '../../traveler/screens/traveler_profile_screen.dart';
+
 /// Reusable card widget to display a single matching traveller result.
 class SenderTravellerCard extends StatelessWidget {
   final SenderTravellerMatch match;
@@ -172,22 +174,50 @@ class SenderTravellerCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            // Request Delivery Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => onRequestDelivery(match),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            // Dual Action Buttons: View Profile & Request Delivery
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => TravelerProfileScreen(
+                            isReadOnly: true,
+                            match: match,
+                            canSelect: true,
+                            onSelectTraveller: onRequestDelivery,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.person_outline_rounded, size: 16),
+                    label: const Text('View Profile'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
                 ),
-                child: const Text(
-                  'Request Delivery',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => onRequestDelivery(match),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Request Delivery',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
