@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'config/supabase_config.dart';
-import 'features/payment/screens/payment_demo_hub_screen.dart';
+import 'features/traveler/screens/traveler_dashboard_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +16,7 @@ class TravgoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Travgo — Smart Travel Delivery',
+      title: 'TRAVGO',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -57,7 +57,7 @@ class TravgoApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           centerTitle: false,
           elevation: 0,
-          backgroundColor: const Color(0xFF0F172A),
+          backgroundColor: Color(0xFF0F172A),
           foregroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
         ),
@@ -71,7 +71,7 @@ class TravgoApp extends StatelessWidget {
         ),
       ),
       themeMode: ThemeMode.system,
-      home: const PaymentDemoHubScreen(),
+      home: const TravelerDashboardScreen(),
     );
   }
 }
