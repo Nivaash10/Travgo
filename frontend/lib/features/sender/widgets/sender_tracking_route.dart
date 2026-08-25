@@ -1,177 +1,304 @@
 import 'package:flutter/material.dart';
 
-/// Reusable Flutter-native route visualization widget showing Source -> Current -> Destination.
+/// Reusable route visualization widget matching the Stitch Live Tracking Map Visualizer.
 class SenderTrackingRoute extends StatelessWidget {
+  final String bookingId;
   final String source;
   final String destination;
   final String? currentLocation;
+  final String? estimatedArrival;
   final double progressPercentage; // 0.0 to 1.0
+  final int speedKmH;
 
   const SenderTrackingRoute({
     super.key,
+    this.bookingId = 'BKG-103',
     required this.source,
     required this.destination,
     this.currentLocation,
+    this.estimatedArrival,
     this.progressPercentage = 0.5,
+    this.speedKmH = 68,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final currentLoc = currentLocation ?? 'In Transit';
 
     return Container(
+      height: 240,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withAlpha(80),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: const Color(0xFF0F172A), // slate-900 background
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(40),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. Map Header Status
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'ROUTE PROGRESS',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                  letterSpacing: 0.8,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B).withAlpha(200),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF34D399), // emerald-400
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'LIVE GPS • $speedKmH km/h',
+                      style: const TextStyle(
+                        color: Color(0xFFF1F5F9),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                '${(progressPercentage * 100).toInt()}% completed',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B).withAlpha(200),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
+                child: Text(
+                  bookingId,
+                  style: const TextStyle(
+                    color: Color(0xFF60A5FA), // text-blue-400
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
 
-          // Route Indicator Line
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              // Background connecting line
-              Container(
-                height: 4,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
-              // Active progress line
-              FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: progressPercentage.clamp(0.05, 1.0),
-                child: Container(
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-
-              // Three node points (Source, Current, Destination)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // 2. Graphical Route Visualizer
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(
                 children: [
-                  // Source Node
-                  CircleAvatar(
-                    radius: 10,
-                    backgroundColor: theme.colorScheme.primary,
-                    child: const Icon(Icons.circle, size: 8, color: Colors.white),
+                  // Origin Pin
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFF334155),
+                            width: 2,
+                          ),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'A',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        source,
+                        style: const TextStyle(
+                          color: Color(0xFFCBD5E1),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
 
-                  // Current Node
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: theme.colorScheme.primary,
-                    child: const Icon(Icons.navigation, size: 14, color: Colors.white),
+                  // Connecting Highway Line with Vehicle
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final clampedProgress = progressPercentage.clamp(
+                            0.0,
+                            1.0,
+                          );
+                          final lineWidth = constraints.maxWidth;
+                          final vehiclePos = lineWidth * clampedProgress;
+
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.centerLeft,
+                            children: [
+                              // Background track
+                              Container(
+                                height: 8,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E293B),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              // Progress bar
+                              Container(
+                                height: 8,
+                                width: vehiclePos.clamp(8.0, lineWidth),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF3B82F6),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              // Vehicle pin
+                              Positioned(
+                                left: (vehiclePos - 12).clamp(
+                                  0.0,
+                                  lineWidth - 24.0,
+                                ),
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.directions_car,
+                                    size: 14,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
                   ),
 
-                  // Destination Node
-                  CircleAvatar(
-                    radius: 10,
-                    backgroundColor: progressPercentage >= 1.0
-                        ? theme.colorScheme.primary
-                        : Colors.grey[400],
-                    child: const Icon(Icons.location_on, size: 10, color: Colors.white),
+                  // Destination Pin
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF10B981), // emerald-500
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'B',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        destination,
+                        style: const TextStyle(
+                          color: Color(0xFFCBD5E1),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
 
-          // Node Labels
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Source Label
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'FROM',
-                      style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      source,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+          // 3. Current Landmark Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B).withAlpha(230),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF334155)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.near_me,
+                        size: 16,
+                        color: Color(0xFF60A5FA),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          currentLoc,
+                          style: const TextStyle(
+                            color: Color(0xFFF8FAFC),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-
-              // Current Location Label
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      'CURRENT',
-                      style: TextStyle(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                if (estimatedArrival != null) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    'ETA: $estimatedArrival',
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
-                    Text(
-                      currentLoc,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: theme.colorScheme.primary),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Destination Label
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'TO',
-                      style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      destination,
-                      textAlign: TextAlign.end,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),

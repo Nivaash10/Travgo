@@ -59,62 +59,65 @@ void main() {
     expect(updated.proofType, equals('OTP Verification'));
   });
 
-  testWidgets('TEST 3: Completion screen displays "Parcel Delivered Successfully"', (tester) async {
+  testWidgets(
+    'TEST 3: Completion screen displays "Parcel Delivered Successfully"',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
+
+      final completion = mockCompletions.first;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SenderDeliveryCompletionScreen(completion: completion),
+        ),
+      );
+
+      expect(find.text('Delivery Status'), findsOneWidget);
+      expect(find.text('Delivery Completed!'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'TEST 4: Booking ID, route, traveller and delivery time are displayed',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
+
+      final completion = mockCompletions.first;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SenderDeliveryCompletionScreen(completion: completion),
+        ),
+      );
+
+      expect(find.text('Booking ID: ${completion.bookingId}'), findsOneWidget);
+      expect(find.text(completion.travellerName), findsOneWidget);
+    },
+  );
+
+  testWidgets('TEST 5: Shipment summary is displayed', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
     final completion = mockCompletions.first;
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryCompletionScreen(completion: completion),
-      ),
+      MaterialApp(home: SenderDeliveryCompletionScreen(completion: completion)),
     );
 
-    expect(find.text('Delivery Completed'), findsOneWidget);
-    expect(find.text('Parcel Delivered Successfully'), findsOneWidget);
-  });
-
-  testWidgets('TEST 4: Booking ID, route, traveller and delivery time are displayed', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
-
-    final completion = mockCompletions.first;
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryCompletionScreen(completion: completion),
-      ),
-    );
-
-    expect(find.text(completion.bookingId), findsOneWidget);
-    expect(find.text(completion.destination), findsWidgets);
+    expect(find.text('SHIPMENT SUMMARY'), findsOneWidget);
     expect(find.text(completion.travellerName), findsOneWidget);
-  });
-
-  testWidgets('TEST 5: Parcel details are displayed', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
-
-    final completion = mockCompletions.first;
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryCompletionScreen(completion: completion),
-      ),
-    );
-
-    expect(find.text('PARCEL DETAILS'), findsOneWidget);
-    expect(find.text(completion.parcelDescription), findsOneWidget);
-    expect(find.text(completion.parcelCategory), findsOneWidget);
-    expect(find.text('${completion.parcelWeightKg} kg'), findsOneWidget);
   });
 
   testWidgets('TEST 6: Proof Available state is displayed', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final availableCompletion = mockCompletions.firstWhere((c) => c.proofOfDeliveryAvailable);
+    final availableCompletion = mockCompletions.firstWhere(
+      (c) => c.proofOfDeliveryAvailable,
+    );
 
     await tester.pumpWidget(
       MaterialApp(
@@ -122,31 +125,39 @@ void main() {
       ),
     );
 
-    expect(find.text('Proof Available'), findsOneWidget);
-    expect(find.text('View Proof'), findsOneWidget);
+    expect(find.text('PROOF OF DELIVERY'), findsOneWidget);
+    expect(find.text('View Digital Proof'), findsOneWidget);
   });
 
-  testWidgets('TEST 7: Proof Pending / unavailable state is displayed correctly', (tester) async {
+  testWidgets(
+    'TEST 7: Proof Pending / unavailable state is displayed correctly',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
+
+      final pendingCompletion = mockCompletions.firstWhere(
+        (c) => !c.proofOfDeliveryAvailable,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SenderDeliveryCompletionScreen(completion: pendingCompletion),
+        ),
+      );
+
+      expect(find.text('PROOF OF DELIVERY'), findsOneWidget);
+    },
+  );
+
+  testWidgets('TEST 8: View Digital Proof opens SenderProofViewerScreen', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final pendingCompletion = mockCompletions.firstWhere((c) => !c.proofOfDeliveryAvailable);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryCompletionScreen(completion: pendingCompletion),
-      ),
+    final availableCompletion = mockCompletions.firstWhere(
+      (c) => c.proofOfDeliveryAvailable,
     );
-
-    expect(find.text('Proof Pending'), findsOneWidget);
-    expect(find.text('Proof of delivery document is currently being generated by traveller.'), findsOneWidget);
-  });
-
-  testWidgets('TEST 8: View Proof opens SenderProofViewerScreen', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
-
-    final availableCompletion = mockCompletions.firstWhere((c) => c.proofOfDeliveryAvailable);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -154,7 +165,7 @@ void main() {
       ),
     );
 
-    final viewProofBtn = find.text('View Proof');
+    final viewProofBtn = find.text('View Digital Proof');
     expect(viewProofBtn, findsOneWidget);
     await tester.ensureVisible(viewProofBtn);
     await tester.tap(viewProofBtn);
@@ -164,7 +175,7 @@ void main() {
     expect(find.text('VERIFIED HANDOVER'), findsOneWidget);
   });
 
-  testWidgets('TEST 9: Back to My Bookings action works', (tester) async {
+  testWidgets('TEST 9: All Bookings action works', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
@@ -174,7 +185,7 @@ void main() {
       ),
     );
 
-    final backBtn = find.text('Back to My Bookings');
+    final backBtn = find.text('All Bookings');
     expect(backBtn, findsOneWidget);
     await tester.ensureVisible(backBtn);
     await tester.tap(backBtn);
@@ -183,70 +194,74 @@ void main() {
     expect(find.byType(MyBookingsScreen), findsOneWidget);
   });
 
-  testWidgets('TEST 10: Delivered booking from SenderBookingDetailScreen opens completion screen', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'TEST 10: Delivered booking from SenderBookingDetailScreen opens completion screen',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final deliveredBooking = SenderMockBookingData.getMockBookings()
-        .firstWhere((b) => b.status == SenderDeliveryStatus.delivered);
+      final deliveredBooking = SenderMockBookingData.getMockBookings()
+          .firstWhere((b) => b.status == SenderDeliveryStatus.delivered);
 
+      await tester.pumpWidget(
+        MaterialApp(home: SenderBookingDetailScreen(booking: deliveredBooking)),
+      );
+
+      final viewProofBtn = find.text('View Delivery Proof');
+      expect(viewProofBtn, findsOneWidget);
+      await tester.ensureVisible(viewProofBtn);
+      await tester.tap(viewProofBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SenderDeliveryCompletionScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'TEST 11: Delivered state in SenderTrackingScreen displays completion action',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
+
+      final deliveredBooking = SenderMockBookingData.getMockBookings()
+          .firstWhere((b) => b.status == SenderDeliveryStatus.delivered);
+
+      await tester.pumpWidget(
+        MaterialApp(home: SenderBookingDetailScreen(booking: deliveredBooking)),
+      );
+
+      final trackBtn = find.text('Track Delivery');
+      expect(trackBtn, findsOneWidget);
+      await tester.ensureVisible(trackBtn);
+      await tester.tap(trackBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SenderTrackingScreen), findsOneWidget);
+
+      final viewConfirmationBtn = find.text('View Delivery Confirmation');
+      expect(viewConfirmationBtn, findsOneWidget);
+      await tester.ensureVisible(viewConfirmationBtn);
+      await tester.tap(viewConfirmationBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SenderDeliveryCompletionScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets('TEST 12: Loading state displays CircularProgressIndicator', (
+    tester,
+  ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: SenderBookingDetailScreen(booking: deliveredBooking),
-      ),
-    );
-
-    final viewProofBtn = find.text('View Delivery Proof');
-    expect(viewProofBtn, findsOneWidget);
-    await tester.ensureVisible(viewProofBtn);
-    await tester.tap(viewProofBtn);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(SenderDeliveryCompletionScreen), findsOneWidget);
-  });
-
-  testWidgets('TEST 11: Delivered state in SenderTrackingScreen displays completion action', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
-
-    final deliveredBooking = SenderMockBookingData.getMockBookings()
-        .firstWhere((b) => b.status == SenderDeliveryStatus.delivered);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderBookingDetailScreen(booking: deliveredBooking),
-      ),
-    );
-
-    final trackBtn = find.text('Track Delivery');
-    expect(trackBtn, findsOneWidget);
-    await tester.ensureVisible(trackBtn);
-    await tester.tap(trackBtn);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(SenderTrackingScreen), findsOneWidget);
-
-    final viewConfirmationBtn = find.text('View Delivery Confirmation');
-    expect(viewConfirmationBtn, findsOneWidget);
-    await tester.ensureVisible(viewConfirmationBtn);
-    await tester.tap(viewConfirmationBtn);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(SenderDeliveryCompletionScreen), findsOneWidget);
-  });
-
-  testWidgets('TEST 12: Loading state displays CircularProgressIndicator', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: SenderDeliveryCompletionScreen(isLoading: true),
-      ),
+      const MaterialApp(home: SenderDeliveryCompletionScreen(isLoading: true)),
     );
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.text('Loading completion details...'), findsOneWidget);
   });
 
-  testWidgets('TEST 13: Error state displays error message and Try Again', (tester) async {
+  testWidgets('TEST 13: Error state displays error message and Try Again', (
+    tester,
+  ) async {
     bool retried = false;
 
     await tester.pumpWidget(
@@ -260,7 +275,10 @@ void main() {
       ),
     );
 
-    expect(find.text('Unable to load delivery completion details'), findsOneWidget);
+    expect(
+      find.text('Unable to load delivery completion details'),
+      findsOneWidget,
+    );
     expect(find.text('Failed to load details'), findsOneWidget);
     expect(find.text('Try Again'), findsOneWidget);
 
@@ -270,16 +288,16 @@ void main() {
     expect(retried, isTrue);
   });
 
-  testWidgets('TEST 14: Existing Track Delivery navigation still works', (tester) async {
+  testWidgets('TEST 14: Existing Track Delivery navigation still works', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
     final booking = SenderMockBookingData.getMockBookings().first;
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: SenderBookingDetailScreen(booking: booking),
-      ),
+      MaterialApp(home: SenderBookingDetailScreen(booking: booking)),
     );
 
     final trackBtn = find.text('Track Delivery');
@@ -291,16 +309,16 @@ void main() {
     expect(find.byType(SenderTrackingScreen), findsOneWidget);
   });
 
-  testWidgets('TEST 15: Existing cancellation functionality is not broken', (tester) async {
+  testWidgets('TEST 15: Existing cancellation functionality is not broken', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
     final booking = SenderMockBookingData.getMockBookings().first;
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: SenderBookingDetailScreen(booking: booking),
-      ),
+      MaterialApp(home: SenderBookingDetailScreen(booking: booking)),
     );
 
     final cancelBtn = find.text('Cancel Request');

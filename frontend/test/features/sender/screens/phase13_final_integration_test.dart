@@ -15,15 +15,13 @@ import 'package:frontend/features/sender/screens/sender_proof_viewer_screen.dart
 import 'package:frontend/features/sender/screens/sender_tracking_screen.dart';
 
 void main() {
-  testWidgets('TASK 11.1: Sender dashboard opens notifications screen', (tester) async {
+  testWidgets('TASK 11.1: Sender dashboard opens notifications screen', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: SenderDashboardScreen(),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: SenderDashboardScreen()));
 
     final notificationBtn = find.byIcon(Icons.notifications_none);
     expect(notificationBtn, findsOneWidget);
@@ -33,15 +31,13 @@ void main() {
     expect(find.byType(SenderNotificationsScreen), findsOneWidget);
   });
 
-  testWidgets('TASK 11.2: Sender dashboard opens Search Route flow', (tester) async {
+  testWidgets('TASK 11.2: Sender dashboard opens Search Route flow', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: SenderDashboardScreen(),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: SenderDashboardScreen()));
 
     final searchBtn = find.text('Search Travellers');
     expect(searchBtn, findsWidgets);
@@ -55,11 +51,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: MyBookingsScreen(),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: MyBookingsScreen()));
 
     expect(find.text('My Bookings'), findsOneWidget);
 
@@ -71,49 +63,51 @@ void main() {
     expect(find.byType(SenderBookingDetailScreen), findsOneWidget);
   });
 
-  testWidgets('TASK 11.4: Booking detail opens tracking screen when appropriate', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'TASK 11.4: Booking detail opens tracking screen when appropriate',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final inTransitBooking = SenderMockBookingData.getMockBookings()
-        .firstWhere((b) => b.status == SenderDeliveryStatus.inTransit);
+      final inTransitBooking = SenderMockBookingData.getMockBookings()
+          .firstWhere((b) => b.status == SenderDeliveryStatus.inTransit);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderBookingDetailScreen(booking: inTransitBooking),
-      ),
-    );
+      await tester.pumpWidget(
+        MaterialApp(home: SenderBookingDetailScreen(booking: inTransitBooking)),
+      );
 
-    final trackBtn = find.text('Track Delivery');
-    expect(trackBtn, findsOneWidget);
-    await tester.ensureVisible(trackBtn);
-    await tester.tap(trackBtn);
-    await tester.pumpAndSettle();
+      final trackBtn = find.text('Track Delivery');
+      expect(trackBtn, findsOneWidget);
+      await tester.ensureVisible(trackBtn);
+      await tester.tap(trackBtn);
+      await tester.pumpAndSettle();
 
-    expect(find.byType(SenderTrackingScreen), findsOneWidget);
-  });
+      expect(find.byType(SenderTrackingScreen), findsOneWidget);
+    },
+  );
 
-  testWidgets('TASK 11.5: Delivered booking exposes completion, proof, and rating actions', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'TASK 11.5: Delivered booking exposes completion, proof, and rating actions',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final deliveredBooking = SenderMockBookingData.getMockBookings()
-        .firstWhere((b) => b.status == SenderDeliveryStatus.delivered);
+      final deliveredBooking = SenderMockBookingData.getMockBookings()
+          .firstWhere((b) => b.status == SenderDeliveryStatus.delivered);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderBookingDetailScreen(booking: deliveredBooking),
-      ),
-    );
+      await tester.pumpWidget(
+        MaterialApp(home: SenderBookingDetailScreen(booking: deliveredBooking)),
+      );
 
-    expect(find.text('View Delivery Proof'), findsOneWidget);
-    expect(find.text('Rate Traveller'), findsOneWidget);
+      expect(find.text('View Delivery Proof'), findsOneWidget);
+      expect(find.text('Rate Traveller'), findsOneWidget);
 
-    await tester.tap(find.text('View Delivery Proof'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('View Delivery Proof'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(SenderDeliveryCompletionScreen), findsOneWidget);
-  });
+      expect(find.byType(SenderDeliveryCompletionScreen), findsOneWidget);
+    },
+  );
 
   testWidgets('TASK 11.6: Rating flow completes successfully', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
@@ -129,15 +123,20 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byIcon(Icons.star_outline_rounded).at(4));
+    await tester.tap(find.byIcon(Icons.star_border).at(4));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextFormField), 'Excellent service.');
     await tester.pumpAndSettle();
 
-    final submitBtn = find.widgetWithText(ElevatedButton, 'Submit Feedback');
+    final submitBtn = find.widgetWithText(
+      ElevatedButton,
+      'Submit Review (5 Stars)',
+    );
     await tester.ensureVisible(submitBtn);
     await tester.tap(submitBtn);
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pump(const Duration(milliseconds: 1300));
     await tester.pumpAndSettle();
 
     expect(find.text('Thank You!'), findsOneWidget);
@@ -215,19 +214,20 @@ void main() {
     expect(find.text('Open Viewer'), findsOneWidget);
   });
 
-  testWidgets('TASK 11.9: Empty/loading/error states render correctly across screens', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: SenderDeliveryCompletionScreen(isLoading: true),
-      ),
-    );
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  testWidgets(
+    'TASK 11.9: Empty/loading/error states render correctly across screens',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SenderDeliveryCompletionScreen(isLoading: true),
+        ),
+      );
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: SenderTrackingScreen(isLoading: true),
-      ),
-    );
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-  });
+      await tester.pumpWidget(
+        const MaterialApp(home: SenderTrackingScreen(isLoading: true)),
+      );
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    },
+  );
 }

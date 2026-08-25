@@ -28,8 +28,18 @@ class MatchingTravellersScreen extends StatelessWidget {
   String _formatDate(DateTime? date) {
     if (date == null) return 'Any date';
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -40,7 +50,14 @@ class MatchingTravellersScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Matching Travellers'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Available Travellers'),
+        actions: [
+          IconButton(icon: const Icon(Icons.tune), onPressed: onModifySearch),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -64,7 +81,8 @@ class MatchingTravellersScreen extends StatelessWidget {
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: onModifySearch ?? () => Navigator.of(context).pop(),
+                        onPressed:
+                            onModifySearch ?? () => Navigator.of(context).pop(),
                         icon: const Icon(Icons.edit, size: 14),
                         label: const Text(
                           'Modify Search',
@@ -85,11 +103,13 @@ class MatchingTravellersScreen extends StatelessWidget {
                     children: [
                       _SummaryChip(
                         icon: Icons.trip_origin,
-                        label: 'From: ${query.source.isNotEmpty ? query.source : "Any"}',
+                        label:
+                            'From: ${query.source.isNotEmpty ? query.source : "Any"}',
                       ),
                       _SummaryChip(
                         icon: Icons.location_on,
-                        label: 'To: ${query.destination.isNotEmpty ? query.destination : "Any"}',
+                        label:
+                            'To: ${query.destination.isNotEmpty ? query.destination : "Any"}',
                       ),
                       _SummaryChip(
                         icon: Icons.calendar_today,
@@ -105,11 +125,25 @@ class MatchingTravellersScreen extends StatelessWidget {
                 ],
               ),
             ),
+            // Filter Chips Row (matching Stitch UI)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Wrap(
+                spacing: 8.0,
+                children: const [
+                  Chip(label: Text('All Trips')),
+                  Chip(label: Text('Car')),
+                  Chip(label: Text('Train')),
+                  Chip(label: Text('EV Car')),
+                ],
+              ),
+            ),
 
             // Content Area (Loading / Error / Empty / Populated List)
-            Expanded(
-              child: _buildContent(context),
-            ),
+            Expanded(child: _buildContent(context)),
           ],
         ),
       ),
@@ -121,9 +155,7 @@ class MatchingTravellersScreen extends StatelessWidget {
 
     // 1. Loading State
     if (isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     // 2. Error State
@@ -134,7 +166,11 @@ class MatchingTravellersScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 12),
               Text(
                 'Unable to load travellers',
@@ -170,7 +206,11 @@ class MatchingTravellersScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.search_off_outlined, size: 56, color: Colors.grey[400]),
+              Icon(
+                Icons.search_off_outlined,
+                size: 56,
+                color: Colors.grey[400],
+              ),
               const SizedBox(height: 16),
               Text(
                 'No travellers found',
@@ -230,10 +270,7 @@ class _SummaryChip extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _SummaryChip({
-    required this.icon,
-    required this.label,
-  });
+  const _SummaryChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {

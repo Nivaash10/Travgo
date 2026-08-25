@@ -15,43 +15,48 @@ import 'package:frontend/features/sender/widgets/sender_delivery_status_badge.da
 void main() {
   final mockRequests = SenderMockDeliveryData.getMockDeliveryRequests();
 
-  testWidgets('TEST 1 & 2: My Bookings screen renders and displays mock delivery requests', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1600));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'TEST 1 & 2: My Bookings screen renders and displays mock delivery requests',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryRequestsScreen(items: mockRequests),
-      ),
-    );
+      await tester.pumpWidget(
+        MaterialApp(home: SenderDeliveryRequestsScreen(items: mockRequests)),
+      );
 
-    expect(find.text('My Bookings'), findsOneWidget);
-    expect(find.byType(SenderDeliveryRequestCard), findsNWidgets(mockRequests.length));
-  });
+      expect(find.text('My Bookings'), findsOneWidget);
+      expect(
+        find.byType(SenderDeliveryRequestCard),
+        findsNWidgets(mockRequests.length),
+      );
+    },
+  );
 
-  testWidgets('TEST 3 & 4: Route, traveller info, and status badge are displayed correctly', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1600));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'TEST 3 & 4: Route, traveller info, and status badge are displayed correctly',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryRequestsScreen(items: [mockRequests.first]),
-      ),
-    );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SenderDeliveryRequestsScreen(items: [mockRequests.first]),
+        ),
+      );
 
-    expect(find.text('Arun'), findsOneWidget);
-    expect(find.text('Coimbatore → Chennai'), findsOneWidget);
-    expect(find.byType(SenderDeliveryStatusBadge), findsWidgets);
-  });
+      expect(find.text('Arun'), findsOneWidget);
+      expect(find.text('Coimbatore → Chennai'), findsOneWidget);
+      expect(find.byType(SenderDeliveryStatusBadge), findsWidgets);
+    },
+  );
 
   testWidgets('TEST 5: Filtering to Active works', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1600));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryRequestsScreen(items: mockRequests),
-      ),
+      MaterialApp(home: SenderDeliveryRequestsScreen(items: mockRequests)),
     );
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'Active'));
@@ -68,9 +73,7 @@ void main() {
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryRequestsScreen(items: mockRequests),
-      ),
+      MaterialApp(home: SenderDeliveryRequestsScreen(items: mockRequests)),
     );
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'Pending'));
@@ -85,9 +88,7 @@ void main() {
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryRequestsScreen(items: mockRequests),
-      ),
+      MaterialApp(home: SenderDeliveryRequestsScreen(items: mockRequests)),
     );
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'Completed'));
@@ -99,7 +100,9 @@ void main() {
     expect(find.text('Arun'), findsNothing);
   });
 
-  testWidgets('TEST 8: Tapping a booking opens SenderDeliveryStatusScreen', (tester) async {
+  testWidgets('TEST 8: Tapping a booking opens SenderDeliveryStatusScreen', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: SenderDeliveryRequestsScreen(items: [mockRequests.first]),
@@ -112,19 +115,24 @@ void main() {
     expect(find.byType(SenderDeliveryStatusScreen), findsOneWidget);
   });
 
-  testWidgets('TEST 9: Empty booking list displays "No bookings yet"', (tester) async {
+  testWidgets('TEST 9: Empty booking list displays "No bookings yet"', (
+    tester,
+  ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: SenderDeliveryRequestsScreen(items: []),
-      ),
+      const MaterialApp(home: SenderDeliveryRequestsScreen(items: [])),
     );
 
     expect(find.text('No bookings yet'), findsOneWidget);
-    expect(find.text('Your delivery requests will appear here.'), findsOneWidget);
+    expect(
+      find.text('Your delivery requests will appear here.'),
+      findsOneWidget,
+    );
     expect(find.text('Search Travellers'), findsOneWidget);
   });
 
-  testWidgets('TEST 10: Search Travellers action from empty state works', (tester) async {
+  testWidgets('TEST 10: Search Travellers action from empty state works', (
+    tester,
+  ) async {
     bool searchTapped = false;
 
     await tester.pumpWidget(
@@ -144,12 +152,10 @@ void main() {
     expect(searchTapped, isTrue);
   });
 
-  testWidgets('TEST 11: Dashboard "My Bookings" opens MyBookingsScreen', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: SenderDashboardScreen(),
-      ),
-    );
+  testWidgets('TEST 11: Dashboard "My Bookings" opens MyBookingsScreen', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: SenderDashboardScreen()));
 
     final myBookingsAction = find.text('My Bookings');
     expect(myBookingsAction, findsOneWidget);
@@ -160,57 +166,60 @@ void main() {
     expect(find.byType(MyBookingsScreen), findsOneWidget);
   });
 
-  testWidgets('TEST 12: Dashboard Recent Bookings displays mock preview data when available', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: SenderDashboardScreen(),
-      ),
-    );
+  testWidgets(
+    'TEST 12: Dashboard Recent Bookings displays mock preview data when available',
+    (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SenderDashboardScreen()));
 
-    expect(find.text('Recent Bookings'), findsOneWidget);
-    expect(find.text('Coimbatore → Chennai'), findsWidgets);
-    expect(find.text('Traveller: Arun'), findsOneWidget);
-  });
+      expect(find.text('Recent Bookings'), findsOneWidget);
+      expect(find.text('Coimbatore → Chennai'), findsWidgets);
+      expect(find.text('Arun'), findsWidgets);
+    },
+  );
 
-  testWidgets('TEST 13: All supported delivery statuses render without crashing', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 2400));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'TEST 13: All supported delivery statuses render without crashing',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 2400));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final now = DateTime.now();
-    final allStatuses = SenderDeliveryStatus.values.map((s) {
-      return SenderDeliveryStatusItem(
-        requestId: 'REQ-${s.name}',
-        status: s,
-        createdAt: now,
-        request: SenderDeliveryRequest(
-          searchQuery: SenderSearchQuery(
-            source: 'Coimbatore',
-            destination: 'Chennai',
-            date: now,
+      final now = DateTime.now();
+      final allStatuses = SenderDeliveryStatus.values.map((s) {
+        return SenderDeliveryStatusItem(
+          requestId: 'REQ-${s.name}',
+          status: s,
+          createdAt: now,
+          request: SenderDeliveryRequest(
+            searchQuery: SenderSearchQuery(
+              source: 'Coimbatore',
+              destination: 'Chennai',
+              date: now,
+              parcelWeightKg: 1.0,
+            ),
+            traveller: SenderTravellerMatch(
+              travellerName: 'TestTraveller_${s.name}',
+              isVerified: true,
+              route: 'Coimbatore → Chennai',
+              travelDateTime: 'Today • 10:00 AM',
+              availableCapacityKg: 5.0,
+              priceRupees: 100.0,
+              rating: 4.5,
+            ),
+            parcelDescription: 'Test parcel',
             parcelWeightKg: 1.0,
+            parcelCategory: 'Documents',
           ),
-          traveller: SenderTravellerMatch(
-            travellerName: 'TestTraveller_${s.name}',
-            isVerified: true,
-            route: 'Coimbatore → Chennai',
-            travelDateTime: 'Today • 10:00 AM',
-            availableCapacityKg: 5.0,
-            priceRupees: 100.0,
-            rating: 4.5,
-          ),
-          parcelDescription: 'Test parcel',
-          parcelWeightKg: 1.0,
-          parcelCategory: 'Documents',
-        ),
+        );
+      }).toList();
+
+      await tester.pumpWidget(
+        MaterialApp(home: SenderDeliveryRequestsScreen(items: allStatuses)),
       );
-    }).toList();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryRequestsScreen(items: allStatuses),
-      ),
-    );
-
-    expect(find.byType(SenderDeliveryRequestCard), findsNWidgets(allStatuses.length));
-  });
+      expect(
+        find.byType(SenderDeliveryRequestCard),
+        findsNWidgets(allStatuses.length),
+      );
+    },
+  );
 }

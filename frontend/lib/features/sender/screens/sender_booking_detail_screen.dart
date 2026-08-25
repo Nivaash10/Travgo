@@ -43,12 +43,15 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
     } else {
       // Find matching mock payment or create default based on booking status
       final mockPayments = SenderMockPaymentData.getMockPayments();
-      final match = mockPayments.where((p) => p.bookingId == _booking.id).firstOrNull;
+      final match = mockPayments
+          .where((p) => p.bookingId == _booking.id)
+          .firstOrNull;
 
       if (match != null) {
         _payment = match;
       } else {
-        final isPaid = _booking.status == SenderDeliveryStatus.delivered ||
+        final isPaid =
+            _booking.status == SenderDeliveryStatus.delivered ||
             _booking.status == SenderDeliveryStatus.inTransit ||
             _booking.status == SenderDeliveryStatus.pickedUp;
 
@@ -58,7 +61,9 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
           requestId: 'REQ-${_booking.id}',
           amountRupees: _booking.deliveryPrice + 15.0,
           paymentMethod: 'UPI',
-          status: isPaid ? SenderPaymentStatus.paid : SenderPaymentStatus.pending,
+          status: isPaid
+              ? SenderPaymentStatus.paid
+              : SenderPaymentStatus.pending,
           createdAt: _booking.createdAt,
           paidAt: isPaid ? _booking.createdAt : null,
         );
@@ -68,8 +73,18 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -157,9 +172,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
   void _navigateToTrackDelivery() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => SenderTrackingScreen(
-          bookingId: _booking.id,
-        ),
+        builder: (context) => SenderTrackingScreen(bookingId: _booking.id),
       ),
     );
   }
@@ -171,9 +184,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
     final traveller = request.traveller;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Booking Details'),
-      ),
+      appBar: AppBar(title: const Text('Booking Details')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -246,21 +257,21 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                       const Divider(height: 20),
                       _DetailRow(
                         label: 'Name',
-                        value: _booking.travellerName ?? traveller.travellerName,
+                        value:
+                            _booking.travellerName ?? traveller.travellerName,
                       ),
                       _DetailRow(
                         label: 'Status',
-                        value: traveller.isVerified ? 'Verified Traveller' : 'Standard',
+                        value: traveller.isVerified
+                            ? 'Verified Traveller'
+                            : 'Standard',
                       ),
                       if (traveller.rating != null)
                         _DetailRow(
                           label: 'Rating',
                           value: '★ ${traveller.rating!.toStringAsFixed(1)}',
                         ),
-                      _DetailRow(
-                        label: 'Route',
-                        value: traveller.route,
-                      ),
+                      _DetailRow(label: 'Route', value: traveller.route),
                       _DetailRow(
                         label: 'Travel Date',
                         value: traveller.travelDateTime,
@@ -292,16 +303,23 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                       ),
                       const Divider(height: 20),
                       _DetailRow(
-                          label: 'Description', value: request.parcelDescription),
+                        label: 'Description',
+                        value: request.parcelDescription,
+                      ),
                       _DetailRow(
-                          label: 'Category', value: request.parcelCategory),
+                        label: 'Category',
+                        value: request.parcelCategory,
+                      ),
                       _DetailRow(
-                          label: 'Weight', value: '${request.parcelWeightKg} kg'),
+                        label: 'Weight',
+                        value: '${request.parcelWeightKg} kg',
+                      ),
                       if (request.specialInstructions != null &&
                           request.specialInstructions!.isNotEmpty)
                         _DetailRow(
-                            label: 'Special Instructions',
-                            value: request.specialInstructions!),
+                          label: 'Special Instructions',
+                          value: request.specialInstructions!,
+                        ),
                     ],
                   ),
                 ),
@@ -330,11 +348,15 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                       const Divider(height: 20),
                       _DetailRow(
                         label: 'Pickup Location',
-                        value: _booking.pickupLocation ?? request.searchQuery.source,
+                        value:
+                            _booking.pickupLocation ??
+                            request.searchQuery.source,
                       ),
                       _DetailRow(
                         label: 'Delivery Location',
-                        value: _booking.deliveryLocation ?? request.searchQuery.destination,
+                        value:
+                            _booking.deliveryLocation ??
+                            request.searchQuery.destination,
                       ),
                       _DetailRow(
                         label: 'Delivery Price',
@@ -445,7 +467,9 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                           ? 'Retry Payment'
                           : 'Complete Payment',
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -465,7 +489,10 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                     icon: const Icon(Icons.alt_route),
                     label: const Text(
                       'Track Delivery',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -492,7 +519,10 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                     icon: const Icon(Icons.verified_outlined),
                     label: const Text(
                       'View Delivery Proof',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[700],
@@ -514,7 +544,8 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                           builder: (context) => SenderDeliveryFeedbackScreen(
                             bookingId: _booking.id,
                             travellerName: _booking.travellerName,
-                            route: '${_booking.request.searchQuery.source} → ${_booking.request.searchQuery.destination}',
+                            route:
+                                '${_booking.request.searchQuery.source} → ${_booking.request.searchQuery.destination}',
                           ),
                         ),
                       );
@@ -522,7 +553,10 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                     icon: const Icon(Icons.star),
                     label: const Text(
                       'Rate Traveller',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber[700],
@@ -551,7 +585,10 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                     ),
                     child: const Text(
                       'Cancel Request',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -568,10 +605,7 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DetailRow({
-    required this.label,
-    required this.value,
-  });
+  const _DetailRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -581,10 +615,7 @@ class _DetailRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-          ),
+          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
           const SizedBox(width: 8),
           Flexible(
             child: Text(

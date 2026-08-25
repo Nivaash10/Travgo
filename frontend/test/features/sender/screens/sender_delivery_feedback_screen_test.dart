@@ -32,28 +32,33 @@ void main() {
     expect(rating.isValidRating, isTrue);
   });
 
-  test('TEST 2: copyWith() correctly updates rating/feedback/submission state', () {
-    final now = DateTime.now();
-    final rating = SenderDeliveryRating(
-      id: 'RAT-TEST',
-      requestId: 'REQ-TEST',
-      bookingId: 'BKG-TEST',
-      travellerName: 'Arun',
-      submittedAt: now,
-    );
+  test(
+    'TEST 2: copyWith() correctly updates rating/feedback/submission state',
+    () {
+      final now = DateTime.now();
+      final rating = SenderDeliveryRating(
+        id: 'RAT-TEST',
+        requestId: 'REQ-TEST',
+        bookingId: 'BKG-TEST',
+        travellerName: 'Arun',
+        submittedAt: now,
+      );
 
-    final updated = rating.copyWith(
-      rating: 5.0,
-      feedback: 'Outstanding!',
-      isSubmitted: true,
-    );
+      final updated = rating.copyWith(
+        rating: 5.0,
+        feedback: 'Outstanding!',
+        isSubmitted: true,
+      );
 
-    expect(updated.rating, equals(5.0));
-    expect(updated.feedback, equals('Outstanding!'));
-    expect(updated.isSubmitted, isTrue);
-  });
+      expect(updated.rating, equals(5.0));
+      expect(updated.feedback, equals('Outstanding!'));
+      expect(updated.isSubmitted, isTrue);
+    },
+  );
 
-  testWidgets('TEST 3: Feedback screen displays traveller and route', (tester) async {
+  testWidgets('TEST 3: Feedback screen displays traveller and route', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
@@ -67,12 +72,14 @@ void main() {
       ),
     );
 
-    expect(find.text('Rate Your Delivery'), findsOneWidget);
+    expect(find.text('Rate & Review'), findsOneWidget);
     expect(find.text('Ravi'), findsOneWidget);
-    expect(find.text('Coimbatore → Chennai'), findsOneWidget);
+    expect(find.text('Delivered: Coimbatore → Chennai'), findsOneWidget);
   });
 
-  testWidgets('TEST 4: Submit button is disabled before rating selection', (tester) async {
+  testWidgets('TEST 4: Submit button is disabled before rating selection', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
@@ -85,11 +92,15 @@ void main() {
       ),
     );
 
-    final submitBtn = tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Submit Feedback'));
+    final submitBtn = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Submit Review (0 Stars)'),
+    );
     expect(submitBtn.onPressed, isNull);
   });
 
-  testWidgets('TEST 5: Selecting 1 star updates rating to 1/5', (tester) async {
+  testWidgets('TEST 5: Selecting 1 star updates rating to 1 Star', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
@@ -103,16 +114,20 @@ void main() {
     );
 
     // Tap first star
-    await tester.tap(find.byIcon(Icons.star_outline_rounded).first);
+    await tester.tap(find.byIcon(Icons.star_border).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Rating: 1/5'), findsOneWidget);
+    expect(find.text('Submit Review (1 Stars)'), findsOneWidget);
 
-    final submitBtn = tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Submit Feedback'));
+    final submitBtn = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Submit Review (1 Stars)'),
+    );
     expect(submitBtn.onPressed, isNotNull);
   });
 
-  testWidgets('TEST 6: Selecting 5 stars updates rating to 5/5', (tester) async {
+  testWidgets('TEST 6: Selecting 5 stars updates rating to 5 Stars', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
@@ -126,10 +141,10 @@ void main() {
     );
 
     // Tap fifth star
-    await tester.tap(find.byIcon(Icons.star_outline_rounded).at(4));
+    await tester.tap(find.byIcon(Icons.star_border).at(4));
     await tester.pumpAndSettle();
 
-    expect(find.text('Rating: 5/5'), findsOneWidget);
+    expect(find.text('Submit Review (5 Stars)'), findsOneWidget);
   });
 
   testWidgets('TEST 7: Feedback text can be entered', (tester) async {
@@ -145,115 +160,142 @@ void main() {
       ),
     );
 
-    await tester.enterText(find.byType(TextFormField), 'Very smooth delivery experience.');
+    await tester.enterText(
+      find.byType(TextFormField),
+      'Very smooth delivery experience.',
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Very smooth delivery experience.'), findsOneWidget);
   });
 
-  testWidgets('TEST 8 & 9: Submission succeeds and confirmation screen displays submitted rating', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'TEST 8 & 9: Submission succeeds and confirmation screen displays submitted rating',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: SenderDeliveryFeedbackScreen(
-          bookingId: 'BKG-105',
-          travellerName: 'Ravi',
-          route: 'Coimbatore → Chennai',
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SenderDeliveryFeedbackScreen(
+            bookingId: 'BKG-105',
+            travellerName: 'Ravi',
+            route: 'Coimbatore → Chennai',
+          ),
         ),
-      ),
-    );
+      );
 
-    // Tap 5 stars
-    await tester.tap(find.byIcon(Icons.star_outline_rounded).at(4));
-    await tester.pumpAndSettle();
+      // Tap 5 stars
+      await tester.tap(find.byIcon(Icons.star_border).at(4));
+      await tester.pumpAndSettle();
 
-    // Enter feedback
-    await tester.enterText(find.byType(TextFormField), 'Fast and safe handover!');
-    await tester.pumpAndSettle();
+      // Enter feedback
+      await tester.enterText(
+        find.byType(TextFormField),
+        'Fast and safe handover!',
+      );
+      await tester.pumpAndSettle();
 
-    // Submit
-    final submitBtn = find.widgetWithText(ElevatedButton, 'Submit Feedback');
-    await tester.ensureVisible(submitBtn);
-    await tester.tap(submitBtn);
-    await tester.pumpAndSettle();
+      // Submit
+      final submitBtn = find.widgetWithText(
+        ElevatedButton,
+        'Submit Review (5 Stars)',
+      );
+      await tester.ensureVisible(submitBtn);
+      await tester.tap(submitBtn);
+      await tester.pump(
+        const Duration(milliseconds: 800),
+      ); // Show Thank You dialog
+      await tester.pump(
+        const Duration(milliseconds: 1300),
+      ); // Navigate to confirmation
+      await tester.pumpAndSettle();
 
-    expect(find.byType(SenderFeedbackConfirmationScreen), findsOneWidget);
-    expect(find.text('Thank You!'), findsOneWidget);
-    expect(find.text('Your feedback has been submitted successfully.'), findsOneWidget);
-    expect(find.text('Ravi'), findsOneWidget);
-    expect(find.text('★ 5.0'), findsOneWidget);
-  });
+      expect(find.byType(SenderFeedbackConfirmationScreen), findsOneWidget);
+      expect(find.text('Thank You!'), findsOneWidget);
+      expect(
+        find.text('Your feedback has been submitted successfully.'),
+        findsOneWidget,
+      );
+      expect(find.text('Ravi'), findsOneWidget);
+      expect(find.text('★ 5.0'), findsOneWidget);
+    },
+  );
 
-  testWidgets('TEST 10: Duplicate submission is prevented when isSubmitted == true', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'TEST 10: Duplicate submission is prevented when isSubmitted == true',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final submittedRating = SenderDeliveryRating(
-      id: 'RAT-DONE',
-      requestId: 'REQ-DONE',
-      bookingId: 'BKG-DONE',
-      travellerName: 'Arun',
-      route: 'Coimbatore → Chennai',
-      rating: 5.0,
-      feedback: 'Already submitted feedback.',
-      submittedAt: DateTime.now(),
-      isSubmitted: true,
-    );
+      final submittedRating = SenderDeliveryRating(
+        id: 'RAT-DONE',
+        requestId: 'REQ-DONE',
+        bookingId: 'BKG-DONE',
+        travellerName: 'Arun',
+        route: 'Coimbatore → Chennai',
+        rating: 5.0,
+        feedback: 'Already submitted feedback.',
+        submittedAt: DateTime.now(),
+        isSubmitted: true,
+      );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryFeedbackScreen(
-          ratingData: submittedRating,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SenderDeliveryFeedbackScreen(ratingData: submittedRating),
         ),
-      ),
-    );
+      );
 
-    expect(find.text('Feedback Already Submitted'), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, 'Submit Feedback'), findsNothing);
-  });
+      expect(find.text('Rate & Review'), findsOneWidget);
+      expect(find.byType(ElevatedButton), findsNothing);
+    },
+  );
 
-  testWidgets('TEST 11: Completed delivery provides "Rate Traveller" entry point', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'TEST 11: Completed delivery provides "Rate Traveller" entry point',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final completion = SenderMockDeliveryCompletionData.getMockCompletions().first;
+      final completion =
+          SenderMockDeliveryCompletionData.getMockCompletions().first;
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderDeliveryCompletionScreen(completion: completion),
-      ),
-    );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SenderDeliveryCompletionScreen(completion: completion),
+        ),
+      );
 
-    final rateBtn = find.text('Rate Traveller');
-    expect(rateBtn, findsOneWidget);
-    await tester.ensureVisible(rateBtn);
-    await tester.tap(rateBtn);
-    await tester.pumpAndSettle();
+      final rateBtn = find.text('Rate Traveller');
+      expect(rateBtn, findsOneWidget);
+      await tester.ensureVisible(rateBtn);
+      await tester.tap(rateBtn);
+      await tester.pumpAndSettle();
 
-    expect(find.byType(SenderDeliveryFeedbackScreen), findsOneWidget);
-  });
+      expect(find.byType(SenderDeliveryFeedbackScreen), findsOneWidget);
+    },
+  );
 
-  testWidgets('TEST 12: Existing completed booking functionality still renders correctly', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'TEST 12: Existing completed booking functionality still renders correctly',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final deliveredBooking = SenderMockBookingData.getMockBookings()
-        .firstWhere((b) => b.status == SenderDeliveryStatus.delivered);
+      final deliveredBooking = SenderMockBookingData.getMockBookings()
+          .firstWhere((b) => b.status == SenderDeliveryStatus.delivered);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SenderBookingDetailScreen(booking: deliveredBooking),
-      ),
-    );
+      await tester.pumpWidget(
+        MaterialApp(home: SenderBookingDetailScreen(booking: deliveredBooking)),
+      );
 
-    expect(find.text('Rate Traveller'), findsOneWidget);
-    expect(find.text('View Delivery Proof'), findsOneWidget);
+      expect(find.text('Rate Traveller'), findsOneWidget);
+      expect(find.text('View Delivery Proof'), findsOneWidget);
 
-    await tester.tap(find.text('Rate Traveller'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Rate Traveller'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(SenderDeliveryFeedbackScreen), findsOneWidget);
-  });
+      expect(find.byType(SenderDeliveryFeedbackScreen), findsOneWidget);
+    },
+  );
 }

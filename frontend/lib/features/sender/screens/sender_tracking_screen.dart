@@ -43,18 +43,20 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
     }
   }
 
-  String _formatLastUpdated(DateTime time) {
-    final diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    if (diff.inHours < 24) return '${diff.inHours} hrs ago';
-    return '${time.day}/${time.month}/${time.year}';
-  }
-
   String _formatEventTime(DateTime time) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final minuteStr = time.minute.toString().padLeft(2, '0');
     return '${time.day} ${months[time.month - 1]} • ${time.hour}:$minuteStr';
@@ -71,9 +73,7 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
 
     setState(() {
       _isRefreshing = false;
-      _tracking = _tracking.copyWith(
-        lastUpdated: DateTime.now(),
-      );
+      _tracking = _tracking.copyWith(lastUpdated: DateTime.now());
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -96,7 +96,10 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
             const Text('Live Tracking'),
             Text(
               'ID: ${_tracking.bookingId}',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.normal,
+              ),
             ),
           ],
         ),
@@ -114,9 +117,7 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: _buildBody(context, theme),
-      ),
+      body: SafeArea(child: _buildBody(context, theme)),
     );
   }
 
@@ -131,7 +132,9 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
             const SizedBox(height: 16),
             Text(
               'Loading tracking information...',
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.grey[700],
+              ),
             ),
           ],
         ),
@@ -146,17 +149,25 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 56, color: theme.colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 56,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Unable to load tracking information',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 widget.errorMessage!,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey[600],
+                ),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -179,11 +190,23 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Delivery Summary Card
+            // 1. Map Visualizer Canvas
+            SenderTrackingRoute(
+              bookingId: _tracking.bookingId,
+              source: _tracking.source,
+              destination: _tracking.destination,
+              currentLocation: _tracking.currentLocation,
+              estimatedArrival: _tracking.estimatedArrival,
+              progressPercentage: _tracking.progressPercentage,
+            ),
+            const SizedBox(height: 16),
+
+            // 2. Carrier Information Card
             Card(
-              elevation: 2,
+              elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -193,159 +216,207 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '${_tracking.source} → ${_tracking.destination}',
-                          style: theme.textTheme.titleLarge?.copyWith(
+                        const Text(
+                          'CARRIER INFORMATION',
+                          style: TextStyle(
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
+                            color: Color(0xFF475569),
+                            letterSpacing: 0.8,
                           ),
                         ),
-                        SenderTrackingStatusBadge(status: _tracking.currentStatus),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.person_outline, size: 16, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Traveller: ${_tracking.travellerName}',
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                        ),
-                        if (_tracking.travellerVerified) ...[
-                          const SizedBox(width: 6),
-                          Icon(Icons.verified, size: 14, color: theme.colorScheme.primary),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text(
-                          _tracking.travelDateTime,
-                          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                        SenderTrackingStatusBadge(
+                          status: _tracking.currentStatus,
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Route Progress Visualization
-            SenderTrackingRoute(
-              source: _tracking.source,
-              destination: _tracking.destination,
-              currentLocation: _tracking.currentLocation,
-              progressPercentage: _tracking.progressPercentage,
-            ),
-            const SizedBox(height: 16),
-
-            // Current Status & Location Card
-            Card(
-              elevation: 1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'CURRENT STATUS',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                        letterSpacing: 0.8,
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFF1F5F9)),
                       ),
-                    ),
-                    const Divider(height: 18),
-                    Text(
-                      _tracking.statusMessage,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    if (_tracking.currentLocation != null)
-                      _InfoRow(
-                        icon: Icons.my_location,
-                        label: 'Current Location',
-                        value: _tracking.currentLocation!,
-                      ),
-                    if (_tracking.estimatedArrival != null)
-                      _InfoRow(
-                        icon: Icons.access_time,
-                        label: 'Estimated Arrival',
-                        value: _tracking.estimatedArrival!,
-                        valueColor: theme.colorScheme.primary,
-                      ),
-                    _InfoRow(
-                      icon: Icons.update,
-                      label: 'Last Updated',
-                      value: '${_formatLastUpdated(_tracking.lastUpdated)} (Demo tracking data)',
-                    ),
-                    if (_tracking.currentStatus == SenderTrackingStatus.delivered) ...[
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => SenderDeliveryCompletionScreen(
-                                  bookingId: _tracking.bookingId,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor: const Color(0xFFE2E8F0),
+                                child: Text(
+                                  _tracking.travellerName.isNotEmpty
+                                      ? _tracking.travellerName[0].toUpperCase()
+                                      : 'T',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E293B),
+                                  ),
                                 ),
                               ),
-                            );
-                          },
-                          icon: const Icon(Icons.verified),
-                          label: const Text(
-                            'View Delivery Confirmation',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        _tracking.travellerName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      if (_tracking.travellerVerified) ...[
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.verified,
+                                          size: 14,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _tracking.travelDateTime,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green[700],
-                            foregroundColor: Colors.white,
+                          InkWell(
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Calling ${_tracking.travellerName}...',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF2563EB),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.call,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Delivery Confirmation OTP Notice
+                    Container(
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFDBEAFE)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Delivery Confirmation OTP',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Color(0xFF1E3A8A),
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Share with receiver to verify handoff.',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF1D4ED8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(0xFFBFDBFE),
+                              ),
+                            ),
+                            child: const Text(
+                              '6842',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Color(0xFF1D4ED8),
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-            // Tracking Timeline Card
+            // 3. Tracking Timeline Card
             Card(
-              elevation: 1,
+              elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'TRACKING TIMELINE',
-                      style: theme.textTheme.labelMedium?.copyWith(
+                    const Text(
+                      'DELIVERY LIFECYCLE TIMELINE',
+                      style: TextStyle(
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
+                        color: Color(0xFF475569),
                         letterSpacing: 0.8,
                       ),
                     ),
-                    const Divider(height: 20),
+                    const Divider(height: 24, color: Color(0xFFF1F5F9)),
                     if (_tracking.events.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12.0),
                         child: Text(
                           'No tracking events recorded yet.',
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: TextStyle(color: Color(0xFF64748B)),
                         ),
                       )
                     else
@@ -361,50 +432,44 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+            const SizedBox(height: 20),
 
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color? valueColor;
-
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: Colors.grey[600]),
-          const SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: valueColor ?? Colors.black87,
+            // 4. Action Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => SenderDeliveryCompletionScreen(
+                        bookingId: _tracking.bookingId,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.task_alt),
+                label: Text(
+                  _tracking.currentStatus == SenderTrackingStatus.delivered
+                      ? 'View Delivery Confirmation'
+                      : 'Confirm Package Delivery (Receiver OTP)',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -487,8 +552,9 @@ class _TimelineTile extends StatelessWidget {
                       Text(
                         event.title,
                         style: TextStyle(
-                          fontWeight:
-                              event.isCurrent ? FontWeight.bold : FontWeight.w600,
+                          fontWeight: event.isCurrent
+                              ? FontWeight.bold
+                              : FontWeight.w600,
                           fontSize: 14,
                           color: event.isCurrent
                               ? theme.colorScheme.primary

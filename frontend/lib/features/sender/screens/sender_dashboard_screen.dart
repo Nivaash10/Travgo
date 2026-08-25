@@ -1,31 +1,28 @@
 import 'package:flutter/material.dart';
 import '../data/sender_mock_booking_data.dart';
 import '../data/sender_mock_notification_data.dart';
-import '../models/sender_mock_delivery_data.dart';
-import '../widgets/sender_delivery_status_badge.dart';
+import '../widgets/sender_booking_card.dart';
 import 'my_bookings_screen.dart';
 import 'search_route_screen.dart';
-import 'sender_delivery_status_screen.dart';
+import 'sender_booking_detail_screen.dart';
 import 'sender_notifications_screen.dart';
 
 /// Sender Dashboard Screen.
-/// 
+///
 /// Primary mobile dashboard view for Senders in TRAVGO.
 class SenderDashboardScreen extends StatefulWidget {
   final String userName;
 
-  const SenderDashboardScreen({
-    super.key,
-    this.userName = 'Sender',
-  });
+  const SenderDashboardScreen({super.key, this.userName = 'Sender'});
 
   @override
   State<SenderDashboardScreen> createState() => _SenderDashboardScreenState();
 }
 
 class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
-  final TextEditingController _quickSourceController =
-      TextEditingController(text: 'Coimbatore');
+  final TextEditingController _quickSourceController = TextEditingController(
+    text: 'Coimbatore',
+  );
   final TextEditingController _quickDestinationController =
       TextEditingController(text: 'Chennai');
 
@@ -41,7 +38,8 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
       MaterialPageRoute(
         builder: (context) => SearchRouteScreen(
           initialSource: source ?? _quickSourceController.text.trim(),
-          initialDestination: destination ?? _quickDestinationController.text.trim(),
+          initialDestination:
+              destination ?? _quickDestinationController.text.trim(),
         ),
       ),
     );
@@ -62,7 +60,8 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => SenderNotificationsScreen(
-          initialNotifications: SenderMockNotificationData.getMockNotifications(),
+          initialNotifications:
+              SenderMockNotificationData.getMockNotifications(),
         ),
       ),
     );
@@ -71,7 +70,9 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
   void _showFeatureNotice(String featureName) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$featureName integration will be enabled in a future phase.'),
+        content: Text(
+          '$featureName integration will be enabled in a future phase.',
+        ),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -98,10 +99,7 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
                   color: Colors.red,
                   shape: BoxShape.circle,
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 16,
-                  minHeight: 16,
-                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                 child: Text(
                   '$unreadCount',
                   style: const TextStyle(
@@ -119,83 +117,32 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
   }
 
   Widget _buildRecentBookingsPreview(BuildContext context) {
-    final theme = Theme.of(context);
-    final mockBookings = SenderMockDeliveryData.getMockDeliveryRequests();
+    final mockBookings = SenderMockBookingData.getMockBookings();
 
     if (mockBookings.isEmpty) {
-      return Card(
-        color: Colors.grey[50],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: Colors.grey[300]!),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Center(
-            child: Text(
-              'No bookings yet.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
-            ),
-          ),
+      return Center(
+        child: Text(
+          'No recent bookings.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
         ),
       );
     }
 
     final recentPreview = mockBookings.take(2).toList();
-
     return Column(
       children: recentPreview.map((item) {
-        final request = item.request;
-        final traveller = request.traveller;
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8.0),
-          elevation: 1,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: InkWell(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => SenderDeliveryStatusScreen(
-                    statusItem: item,
-                  ),
-                ),
-              );
-            },
-            borderRadius: BorderRadius.circular(10),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          traveller.route,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Traveller: ${traveller.travellerName}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SenderDeliveryStatusBadge(status: item.status),
-                ],
+        return SenderBookingCard(
+          booking: item,
+          onViewDetails: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => SenderBookingDetailScreen(booking: item),
               ),
-            ),
-          ),
+            );
+          },
+          onCancel: null,
         );
       }).toList(),
     );
@@ -206,11 +153,46 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('TRAVGO'),
-        actions: [
-          _buildNotificationIcon(),
-        ],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(56),
+        child: Container(
+          color: Theme.of(context).colorScheme.background,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => _showFeatureNotice('Profile'),
+              ),
+              const Text(
+                'TRAVGO',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Row(
+                children: [
+                  _buildNotificationIcon(),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => _showFeatureNotice('Profile'),
+                    child: const CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Color(0xFFE2E8F0),
+                      child: Text(
+                        'S',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -228,7 +210,7 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Send your parcels through travellers already travelling your route',
+                'Where do you want to send a parcel?',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.grey[700],
                 ),
@@ -254,7 +236,7 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Quick From field
+                      // From Input
                       TextFormField(
                         controller: _quickSourceController,
                         decoration: const InputDecoration(
@@ -266,19 +248,66 @@ class _SenderDashboardScreenState extends State<SenderDashboardScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Quick To field
-                      TextFormField(
-                        controller: _quickDestinationController,
-                        decoration: const InputDecoration(
-                          labelText: 'To',
-                          prefixIcon: Icon(Icons.location_on),
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                        ),
+                      // To Input with Swap Button
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _quickDestinationController,
+                              decoration: const InputDecoration(
+                                labelText: 'To',
+                                prefixIcon: Icon(Icons.location_on),
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            onPressed: () {
+                              final temp = _quickSourceController.text;
+                              _quickSourceController.text =
+                                  _quickDestinationController.text;
+                              _quickDestinationController.text = temp;
+                            },
+                            child: const Text('Swap'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Date & Weight Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              initialValue: '25 Aug 2026',
+                              decoration: const InputDecoration(
+                                labelText: 'Date',
+                                prefixIcon: Icon(Icons.calendar_today),
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextFormField(
+                              initialValue: '2',
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Weight (kg)',
+                                prefixIcon: Icon(Icons.fitness_center),
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
 
-                      // Search Button
+                      // Search Travellers Button
                       ElevatedButton.icon(
                         onPressed: _navigateToSearchRoute,
                         icon: const Icon(Icons.search),
@@ -377,9 +406,7 @@ class _QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
@@ -392,7 +419,10 @@ class _QuickActionCard extends StatelessWidget {
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),

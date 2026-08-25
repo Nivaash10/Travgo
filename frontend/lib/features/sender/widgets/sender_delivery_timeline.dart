@@ -5,10 +5,7 @@ import '../models/sender_delivery_status.dart';
 class SenderDeliveryTimeline extends StatelessWidget {
   final SenderDeliveryStatusItem statusItem;
 
-  const SenderDeliveryTimeline({
-    super.key,
-    required this.statusItem,
-  });
+  const SenderDeliveryTimeline({super.key, required this.statusItem});
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +15,7 @@ class SenderDeliveryTimeline extends StatelessWidget {
       children: List.generate(steps.length, (index) {
         final step = steps[index];
         final isLast = index == steps.length - 1;
-        return _TimelineStepTile(
-          step: step,
-          isLast: isLast,
-        );
+        return _TimelineStepTile(step: step, isLast: isLast);
       }),
     );
   }
@@ -145,10 +139,7 @@ class _TimelineStepTile extends StatelessWidget {
   final _TimelineStep step;
   final bool isLast;
 
-  const _TimelineStepTile({
-    required this.step,
-    required this.isLast,
-  });
+  const _TimelineStepTile({required this.step, required this.isLast});
 
   @override
   Widget build(BuildContext context) {
