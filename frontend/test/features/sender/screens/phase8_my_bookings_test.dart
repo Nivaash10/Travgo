@@ -258,7 +258,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: SenderBookingDetailScreen(booking: mockBookings.first),
+        home: SenderBookingDetailScreen(
+          booking: mockBookings.first.copyWith(status: SenderDeliveryStatus.inTransit),
+        ),
       ),
     );
 

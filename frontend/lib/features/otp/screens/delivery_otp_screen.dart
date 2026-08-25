@@ -13,12 +13,22 @@ import 'package:latlong2/latlong.dart';
 import '../../sender/data/sender_mock_booking_data.dart';
 import '../../sender/models/sender_delivery_status.dart';
 import '../../tracking/services/location_service.dart';
+import '../../tracking/models/tracking_model.dart' hide ParcelStatus;
+import '../../../models/travgo_delivery_booking.dart';
+import '../../ratings/screens/rating_screen.dart';
 import '../models/otp_model.dart';
 import '../services/otp_service.dart';
 import '../widgets/travgo_theme.dart';
 
 class DeliveryOtpScreen extends StatefulWidget {
-  const DeliveryOtpScreen({super.key});
+  final ParcelTrip? trip;
+  final TravgoDeliveryBooking? booking;
+
+  const DeliveryOtpScreen({
+    super.key,
+    this.trip,
+    this.booking,
+  });
 
   @override
   State<DeliveryOtpScreen> createState() => _DeliveryOtpScreenState();
@@ -99,11 +109,12 @@ class _DeliveryOtpScreenState extends State<DeliveryOtpScreen> {
       );
       return;
     }
-    final result = _service.verifyDeliveryOtp(entered);
+    final expectedOtp = widget.booking?.deliveryOtp ?? _otpModel.otp;
+    final result = _service.verifyDeliveryOtp(entered, expectedOtp: expectedOtp);
     if (result == OtpVerifyResult.success) {
-      SenderMockBookingData.updateBookingStatus('BKG-101', SenderDeliveryStatus.delivered);
+      LocationService().stopTracking();
       for (var b in SenderMockBookingData.getMockBookings()) {
-        if (b.status == SenderDeliveryStatus.pickedUp || b.status == SenderDeliveryStatus.inTransit) {
+        if (b.status == SenderDeliveryStatus.pickedUp || b.status == SenderDeliveryStatus.inTransit || b.status == SenderDeliveryStatus.accepted) {
           SenderMockBookingData.updateBookingStatus(b.id, SenderDeliveryStatus.delivered);
         }
       }
@@ -309,7 +320,7 @@ class _DeliveryOtpScreenState extends State<DeliveryOtpScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Parcel #${_otpModel.parcelId}',
+                  'Parcel #${widget.trip?.parcelId ?? widget.booking?.parcelId ?? _otpModel.parcelId}',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -318,9 +329,9 @@ class _DeliveryOtpScreenState extends State<DeliveryOtpScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'Destination: Chennai',
-                  style: TextStyle(fontSize: 11, color: TravgoColors.textSecondary),
+                Text(
+                  'Destination: ${widget.trip?.destinationName ?? widget.booking?.destinationName ?? "Chennai"}',
+                  style: const TextStyle(fontSize: 11, color: TravgoColors.textSecondary),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -587,6 +598,24 @@ class _DeliveryOtpScreenState extends State<DeliveryOtpScreen> {
               ParcelStatusChip(status: _statusUi),
             ],
           ),
+        ),
+        const SizedBox(height: 20),
+        TravgoPrimaryButton(
+          label: 'Proceed to Payment Release & Rating',
+          icon: Icons.star_rounded,
+          color: TravgoColors.success,
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RatingScreen(
+                  parcelId: widget.trip?.parcelId ?? widget.booking?.parcelId ?? _otpModel.parcelId,
+                  travellerId: widget.booking?.travellerId ?? 'TRV-501',
+                  travellerName: widget.trip?.travellerName ?? widget.booking?.travellerName ?? 'Arun Kumar',
+                ),
+              ),
+            );
+          },
         ),
       ],
     );

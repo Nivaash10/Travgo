@@ -16,13 +16,31 @@ class SenderMockBookingData {
     final idx = _dynamicBookings.indexWhere((b) => b.id == bookingId);
     if (idx != -1) {
       _dynamicBookings[idx] = _dynamicBookings[idx].copyWith(status: status);
+    } else {
+      final all = _getDefaultBookings();
+      final matchIdx = all.indexWhere((b) => b.id == bookingId);
+      if (matchIdx != -1) {
+        final updated = all[matchIdx].copyWith(status: status);
+        _dynamicBookings.add(updated);
+      }
     }
   }
 
   static List<SenderBooking> getMockBookings() {
+    final defaults = _getDefaultBookings();
+    final combined = [..._dynamicBookings];
+    for (var d in defaults) {
+      if (!combined.any((b) => b.id == d.id)) {
+        combined.add(d);
+      }
+    }
+    return combined;
+  }
+
+  static List<SenderBooking> _getDefaultBookings() {
     final now = DateTime.now();
 
-    final defaultBookings = [
+    return [
       // 1. Pending Booking
       SenderBooking(
         id: 'BKG-101',
@@ -224,7 +242,5 @@ class SenderMockBookingData {
         ),
       ),
     ];
-
-    return [..._dynamicBookings, ...defaultBookings];
   }
 }

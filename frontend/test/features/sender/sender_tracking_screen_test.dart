@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/features/sender/data/sender_mock_booking_data.dart';
 import 'package:frontend/features/sender/data/sender_mock_tracking_data.dart';
+import 'package:frontend/features/sender/models/sender_delivery_status.dart';
 import 'package:frontend/features/sender/models/sender_tracking.dart';
 import 'package:frontend/features/sender/screens/sender_booking_detail_screen.dart';
 import 'package:frontend/features/sender/screens/sender_tracking_screen.dart';
@@ -226,7 +227,7 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(800, 1800));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-      final booking = SenderMockBookingData.getMockBookings().first;
+      final booking = SenderMockBookingData.getMockBookings().first.copyWith(status: SenderDeliveryStatus.inTransit);
 
       await tester.pumpWidget(
         MaterialApp(home: SenderBookingDetailScreen(booking: booking)),

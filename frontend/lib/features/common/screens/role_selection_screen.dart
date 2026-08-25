@@ -124,73 +124,91 @@ class RoleSelectionScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Prototype Modules Section
-              Text(
-                'Interactive Demo Modules',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF0F172A),
+              // Developer / SIH Demo Utilities Section (Hidden behind clean expandable tile)
+              Theme(
+                data: theme.copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  title: Row(
+                    children: [
+                      Icon(Icons.build_circle_outlined, size: 18, color: Colors.grey[600]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'SIH Developer & Module Utilities',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  subtitle: Text(
+                    'Direct entry for isolated module testing & evaluation',
+                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  ),
+                  children: [
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ModuleActionTile(
+                            icon: Icons.map,
+                            title: 'Live OSRM Map',
+                            subtitle: 'Satellite tracking',
+                            color: Colors.blue,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const TrackingScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _ModuleActionTile(
+                            icon: Icons.payment,
+                            title: 'Payment Hub',
+                            subtitle: 'Escrow & Payouts',
+                            color: const Color(0xFF10B981),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const PaymentDemoHubScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ModuleActionTile(
+                            icon: Icons.person_add,
+                            title: 'Auth Registration',
+                            subtitle: 'Supabase Sign-Up',
+                            color: Colors.purple,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _ModuleActionTile(
-                      icon: Icons.map,
-                      title: 'Live OSRM Map',
-                      subtitle: 'Satellite tracking',
-                      color: Colors.blue,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TrackingScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ModuleActionTile(
-                      icon: Icons.payment,
-                      title: 'Payment Hub',
-                      subtitle: 'Escrow & Payouts',
-                      color: const Color(0xFF10B981),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PaymentDemoHubScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ModuleActionTile(
-                      icon: Icons.person_add,
-                      title: 'Auth Registration',
-                      subtitle: 'Supabase Sign-Up',
-                      color: Colors.purple,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
               ),
             ],
           ),

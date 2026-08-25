@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/sender_search_query.dart';
-import 'matching_travellers_screen.dart';
+import 'receiver_details_screen.dart';
 
 /// Search Route Screen for Senders.
 ///
@@ -98,7 +98,7 @@ class _SearchRouteScreenState extends State<SearchRouteScreen> {
 
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => MatchingTravellersScreen(query: query),
+          builder: (context) => ReceiverDetailsScreen(searchQuery: query),
         ),
       );
     }

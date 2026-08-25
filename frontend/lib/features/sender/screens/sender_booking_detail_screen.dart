@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../otp/services/otp_service.dart';
 import '../data/sender_mock_payment_data.dart';
 import '../models/sender_booking.dart';
 import '../models/sender_delivery_status.dart';
@@ -243,7 +242,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(10.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -255,7 +254,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                           letterSpacing: 0.8,
                         ),
                       ),
-                      const Divider(height: 20),
+                      const Divider(height: 12),
                       _DetailRow(
                         label: 'Name',
                         value:
@@ -281,6 +280,53 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 10),
+              // RECEIVER DETAILS Card
+              Card(
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'RECEIVER DETAILS',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      const Divider(height: 14),
+                      _DetailRow(
+                        label: 'Full Name',
+                        value: request.receiver?.fullName ?? 'Priya Sharma',
+                      ),
+                      _DetailRow(
+                        label: 'Phone Number',
+                        value: request.receiver?.phoneNumber ?? '+91 98765 01234',
+                      ),
+                      _DetailRow(
+                        label: 'Delivery Address',
+                        value: request.receiver?.deliveryAddress ?? _booking.deliveryLocation ?? request.searchQuery.destination,
+                      ),
+                      if (request.receiver?.landmark != null && request.receiver!.landmark!.isNotEmpty)
+                        _DetailRow(
+                          label: 'Landmark',
+                          value: request.receiver!.landmark!,
+                        ),
+                      if (request.receiver?.pincode != null && request.receiver!.pincode!.isNotEmpty)
+                        _DetailRow(
+                          label: 'PIN Code',
+                          value: request.receiver!.pincode!,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
 
               // PARCEL DETAILS Card
@@ -290,7 +336,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(10.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -302,7 +348,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                           letterSpacing: 0.8,
                         ),
                       ),
-                      const Divider(height: 20),
+                      const Divider(height: 12),
                       _DetailRow(
                         label: 'Description',
                         value: request.parcelDescription,
@@ -441,7 +487,9 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              OtpService.instance.generatePickupOtp().otp,
+                              _booking.status == SenderDeliveryStatus.delivered || _booking.status == SenderDeliveryStatus.inTransit
+                                  ? 'VERIFIED'
+                                  : '4827',
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
@@ -451,7 +499,7 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Share this code with ${_booking.travellerName ?? "traveller"} upon parcel pickup',
+                              'Share this code with ${_booking.travellerName ?? "traveller"} upon parcel pickup.',
                               style: const TextStyle(fontSize: 11, color: Color(0xFF4338CA)),
                             ),
                           ],
@@ -492,9 +540,105 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Actions
-              if (_payment.status == SenderPaymentStatus.pending ||
-                  _payment.status == SenderPaymentStatus.failed) ...[
+              // Status Banners & Actions
+              // Status Banners & Actions
+              if (_booking.status == SenderDeliveryStatus.pending) ...[
+                Card(
+                  color: const Color(0xFFEFF6FF),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Color(0xFFBFDBFE)),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.hourglass_top_rounded, color: Color(0xFF2563EB), size: 24),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Waiting for traveller to accept your request. Payment and tracking will become available after acceptance.',
+                            style: TextStyle(fontSize: 13, color: Color(0xFF1E40AF), fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ] else if (_booking.status == SenderDeliveryStatus.rejected) ...[
+                Card(
+                  color: const Color(0xFFFEF2F2),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Color(0xFFFCA5A5)),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.cancel_rounded, color: Color(0xFFDC2626), size: 24),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'This traveller has declined your delivery request. Please select another traveller.',
+                            style: TextStyle(fontSize: 13, color: Color(0xFF991B1B), fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.search_rounded),
+                    label: const Text(
+                      'Choose Another Traveller',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ] else if (_booking.status == SenderDeliveryStatus.accepted && _payment.status != SenderPaymentStatus.paid) ...[
+                Card(
+                  color: const Color(0xFFECFDF5),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Color(0xFFA7F3D0)),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 24),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Traveller accepted your delivery request. Complete payment to secure the delivery.',
+                            style: TextStyle(fontSize: 13, color: Color(0xFF065F46), fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -514,15 +658,15 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                     },
                     icon: const Icon(Icons.payment),
                     label: Text(
-                      _payment.status == SenderPaymentStatus.failed
-                          ? 'Retry Payment'
-                          : 'Complete Payment',
+                      'Pay / Continue to Payment (₹${_booking.deliveryPrice.toInt()})',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -530,9 +674,9 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
               ],
-              if (_booking.canViewStatus)
+              if (_booking.canViewStatus && _booking.status != SenderDeliveryStatus.pending && _booking.status != SenderDeliveryStatus.rejected)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -546,6 +690,8 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -555,69 +701,103 @@ class _SenderBookingDetailScreenState extends State<SenderBookingDetailScreen> {
                 ),
               if (_booking.status == SenderDeliveryStatus.delivered) ...[
                 const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SenderDeliveryCompletionScreen(
-                            bookingId: _booking.id,
-                          ),
+                Card(
+                  color: const Color(0xFFECFDF5),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Color(0xFFA7F3D0)),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 24),
+                            SizedBox(width: 10),
+                            Text(
+                              'DELIVERY COMPLETED ✓',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.verified_outlined),
-                    label: const Text(
-                      'View Delivery Proof',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                        SizedBox(height: 8),
+                        Text(
+                          '✓ Pickup Verified  •  ✓ Traveller Tracked\n✓ Delivery OTP Verified  •  ✓ Parcel Delivered\nPayment: Escrow Released',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF047857), height: 1.35),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SenderDeliveryFeedbackScreen(
-                            bookingId: _booking.id,
-                            travellerName: _booking.travellerName,
-                            route:
-                                '${_booking.request.searchQuery.source} → ${_booking.request.searchQuery.destination}',
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => SenderDeliveryCompletionScreen(
+                                bookingId: _booking.id,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.verified_outlined, size: 16),
+                        label: const Text(
+                          'View Delivery Proof',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.star),
-                    label: const Text(
-                      'Rate Traveller',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[700],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber[700],
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => SenderDeliveryFeedbackScreen(
+                                bookingId: _booking.id,
+                                travellerName: _booking.travellerName,
+                                route:
+                                    '${_booking.request.searchQuery.source} → ${_booking.request.searchQuery.destination}',
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.star, size: 16),
+                        label: const Text(
+                          'Rate Traveller',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber[700],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
               if (_booking.canCancel) ...[

@@ -99,11 +99,12 @@ class TravelerHeader extends StatelessWidget {
               children: [
                 InkWell(
                   onTap: () {
-                    Navigator.push(
+                    Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const RoleSelectionScreen(),
                       ),
+                      (route) => false,
                     );
                   },
                   borderRadius: BorderRadius.circular(12),

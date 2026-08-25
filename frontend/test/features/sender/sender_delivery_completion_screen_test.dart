@@ -294,7 +294,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final booking = SenderMockBookingData.getMockBookings().first;
+    final booking = SenderMockBookingData.getMockBookings().first.copyWith(status: SenderDeliveryStatus.inTransit);
 
     await tester.pumpWidget(
       MaterialApp(home: SenderBookingDetailScreen(booking: booking)),

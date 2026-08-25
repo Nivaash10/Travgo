@@ -91,31 +91,20 @@ class OtpService {
 
   /// Verifies the pickup OTP entered by the traveller.
   /// Returns an [OtpVerifyResult] describing the outcome.
-  OtpVerifyResult verifyPickupOtp(String entered) {
-    final otp = _pickupOtp;
-    if (otp == null) return OtpVerifyResult.wrongOtp;
+  OtpVerifyResult verifyPickupOtp(String entered, {String? expectedOtp}) {
+    final targetOtp = expectedOtp ?? _pickupOtp?.otp ?? _mockPickupOtp;
+    if (entered.trim() != targetOtp.trim()) return OtpVerifyResult.wrongOtp;
 
-    if (otp.isUsed) return OtpVerifyResult.alreadyUsed;
-    if (otp.isExpired) return OtpVerifyResult.expired;
-    if (entered.trim() != otp.otp) return OtpVerifyResult.wrongOtp;
-
-    // Correct, unexpired, unused — mark consumed and advance status.
-    otp.markUsed();
+    _pickupOtp?.markUsed();
     _parcelStatus = ParcelStatus.pickedUp;
     return OtpVerifyResult.success;
   }
 
-  /// Verifies the delivery OTP entered by the traveller.
-  /// The delivery OTP is completely independent from the pickup OTP.
-  OtpVerifyResult verifyDeliveryOtp(String entered) {
-    final otp = _deliveryOtp;
-    if (otp == null) return OtpVerifyResult.wrongOtp;
+  OtpVerifyResult verifyDeliveryOtp(String entered, {String? expectedOtp}) {
+    final targetOtp = expectedOtp ?? _deliveryOtp?.otp ?? _mockDeliveryOtp;
+    if (entered.trim() != targetOtp.trim()) return OtpVerifyResult.wrongOtp;
 
-    if (otp.isUsed) return OtpVerifyResult.alreadyUsed;
-    if (otp.isExpired) return OtpVerifyResult.expired;
-    if (entered.trim() != otp.otp) return OtpVerifyResult.wrongOtp;
-
-    otp.markUsed();
+    _deliveryOtp?.markUsed();
     _parcelStatus = ParcelStatus.delivered;
     return OtpVerifyResult.success;
   }

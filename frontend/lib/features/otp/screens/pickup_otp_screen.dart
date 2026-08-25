@@ -13,13 +13,22 @@ import 'package:latlong2/latlong.dart';
 import '../../sender/data/sender_mock_booking_data.dart';
 import '../../sender/models/sender_delivery_status.dart';
 import '../../tracking/services/location_service.dart';
+import '../../tracking/models/tracking_model.dart' hide ParcelStatus;
+import '../../../models/travgo_delivery_booking.dart';
 import '../models/otp_model.dart';
 import '../services/otp_service.dart';
 import '../widgets/travgo_theme.dart';
 import '../../tracking/screens/tracking_screen.dart';
 
 class PickupOtpScreen extends StatefulWidget {
-  const PickupOtpScreen({super.key});
+  final ParcelTrip? trip;
+  final TravgoDeliveryBooking? booking;
+
+  const PickupOtpScreen({
+    super.key,
+    this.trip,
+    this.booking,
+  });
 
   @override
   State<PickupOtpScreen> createState() => _PickupOtpScreenState();
@@ -100,12 +109,16 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
       );
       return;
     }
-    final result = _service.verifyPickupOtp(entered);
+    final expectedOtp = widget.booking?.pickupOtp ?? _otpModel.otp;
+    final result = _service.verifyPickupOtp(entered, expectedOtp: expectedOtp);
     if (result == OtpVerifyResult.success) {
-      SenderMockBookingData.updateBookingStatus('BKG-101', SenderDeliveryStatus.pickedUp);
+      _countdownTimer?.cancel();
       for (var b in SenderMockBookingData.getMockBookings()) {
-        if (b.status == SenderDeliveryStatus.accepted || b.status == SenderDeliveryStatus.pending || b.status == SenderDeliveryStatus.pickupPending) {
-          SenderMockBookingData.updateBookingStatus(b.id, SenderDeliveryStatus.pickedUp);
+        if (b.status == SenderDeliveryStatus.accepted ||
+            b.status == SenderDeliveryStatus.pending ||
+            b.status == SenderDeliveryStatus.pickupPending ||
+            b.status == SenderDeliveryStatus.pickedUp) {
+          SenderMockBookingData.updateBookingStatus(b.id, SenderDeliveryStatus.inTransit);
         }
       }
       try {
@@ -114,12 +127,33 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
       } catch (_) {
         _service.pickupLocation = const LatLng(11.0168, 76.9558);
       }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Pickup Verified! Real GPS Tracking Active.'),
+            backgroundColor: Color(0xFF10B981),
+          ),
+        );
+        final activeTrip = widget.trip ?? widget.booking?.toParcelTrip();
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => TrackingScreen(
+              trip: activeTrip,
+              parcelId: widget.trip?.parcelId ?? widget.booking?.parcelId ?? _otpModel.parcelId,
+              sourceName: widget.trip?.sourceName ?? widget.booking?.sourceName ?? 'Coimbatore',
+              destinationName: widget.trip?.destinationName ?? widget.booking?.destinationName ?? 'Chennai',
+            ),
+          ),
+        );
+      }
+      return;
     }
+
     setState(() {
       _lastResult = result;
-      _verified = result == OtpVerifyResult.success;
+      _verified = false;
     });
-    if (_verified) _countdownTimer?.cancel();
   }
 
   // ─── UI Helpers ──────────────────────────────────────────────────────────
@@ -310,7 +344,7 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Parcel #${_otpModel.parcelId}',
+                  'Parcel #${widget.trip?.parcelId ?? widget.booking?.parcelId ?? _otpModel.parcelId}',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -319,9 +353,9 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'Coimbatore → Chennai',
-                  style: TextStyle(fontSize: 11, color: TravgoColors.textSecondary),
+                Text(
+                  '${widget.trip?.sourceName ?? widget.booking?.sourceName ?? "Coimbatore"} → ${widget.trip?.destinationName ?? widget.booking?.destinationName ?? "Chennai"}',
+                  style: const TextStyle(fontSize: 11, color: TravgoColors.textSecondary),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -595,9 +629,17 @@ class _PickupOtpScreenState extends State<PickupOtpScreen> {
           icon: Icons.map_outlined,
           color: TravgoColors.success,
           onPressed: () {
+            final activeTrip = widget.trip ?? widget.booking?.toParcelTrip();
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const TrackingScreen()),
+              MaterialPageRoute(
+                builder: (_) => TrackingScreen(
+                  trip: activeTrip,
+                  parcelId: widget.trip?.parcelId ?? widget.booking?.parcelId ?? _otpModel.parcelId,
+                  sourceName: widget.trip?.sourceName ?? widget.booking?.sourceName ?? 'Coimbatore',
+                  destinationName: widget.trip?.destinationName ?? widget.booking?.destinationName ?? 'Chennai',
+                ),
+              ),
             );
           },
         ),

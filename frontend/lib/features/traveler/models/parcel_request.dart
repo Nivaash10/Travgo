@@ -1,3 +1,6 @@
+import '../../tracking/models/tracking_model.dart';
+import '../../../models/travgo_delivery_booking.dart';
+
 class ParcelRequest {
   final String id;
   final String tripId;
@@ -30,4 +33,21 @@ class ParcelRequest {
     this.deliveryLocation,
     this.deliveryCity,
   });
+
+  ParcelTrip toParcelTrip() {
+    return ParcelTrip(
+      parcelId: id.isNotEmpty ? id : 'TRV1024',
+      tripId: tripId.isNotEmpty ? tripId : 'TRIP001',
+      sourceName: source,
+      sourceLocation: TravgoDeliveryBooking.getCityCoordinates(source),
+      destinationName: destination,
+      destinationLocation: TravgoDeliveryBooking.getCityCoordinates(destination),
+      travellerName: 'Arun Kumar',
+      status: status == 'DELIVERED'
+          ? ParcelStatus.delivered
+          : (status == 'PICKED_UP' || status == 'IN_TRANSIT')
+              ? ParcelStatus.inTransit
+              : ParcelStatus.pickedUp,
+    );
+  }
 }

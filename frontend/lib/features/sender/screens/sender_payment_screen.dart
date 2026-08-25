@@ -149,6 +149,42 @@ class _SenderPaymentScreenState extends State<SenderPaymentScreen> {
                     ),
                     const SizedBox(height: 12),
 
+                    // Demo Escrow Banner
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.shield_outlined, color: Color(0xFF2563EB), size: 20),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Demo Escrow Protection Enabled',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E40AF),
+                                  ),
+                                ),
+                                Text(
+                                  'Funds are securely held in escrow and only released to traveller upon Delivery OTP verification.',
+                                  style: TextStyle(fontSize: 11, color: Color(0xFF1D4ED8)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
                     // Booking Summary Card
                     Card(
                       elevation: 2,
@@ -171,6 +207,8 @@ class _SenderPaymentScreenState extends State<SenderPaymentScreen> {
                             const Divider(height: 20),
                             _SummaryLine(label: 'Booking ID', value: _bookingId),
                             _SummaryLine(label: 'Traveller', value: _travellerName),
+                            if (widget.request?.receiver != null)
+                              _SummaryLine(label: 'Receiver', value: widget.request!.receiver!.fullName),
                             _SummaryLine(label: 'Route', value: _route),
                             _SummaryLine(label: 'Travel Date', value: _travelDateTime),
                             _SummaryLine(

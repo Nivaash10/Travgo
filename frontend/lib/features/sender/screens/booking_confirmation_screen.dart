@@ -150,11 +150,39 @@ class BookingConfirmationScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
+                            'Receiver:',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          Text(
+                            request.receiver?.fullName ?? 'Priya Sharma',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
                             'Route:',
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                           Text(
                             traveller.route,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Parcel Category:',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          Text(
+                            request.parcelCategory,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -246,7 +274,7 @@ class BookingConfirmationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Proceed to Payment Button
+              // Confirm & Pay Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -261,7 +289,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                   },
                   icon: const Icon(Icons.payment),
                   label: const Text(
-                    'Proceed to Payment',
+                    'Confirm & Pay',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(

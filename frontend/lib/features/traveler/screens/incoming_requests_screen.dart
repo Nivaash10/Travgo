@@ -176,6 +176,12 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
                   ),
                 );
                 setState(() {});
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ActiveDeliveryScreen(request: request),
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
@@ -226,6 +232,12 @@ class _IncomingRequestsScreenState extends State<IncomingRequestsScreen> {
             onPressed: () {
               Navigator.pop(context);
               ParcelRequestRepository().updateRequestStatus(request.id, 'REJECTED');
+              SenderMockBookingData.updateBookingStatus(request.id, SenderDeliveryStatus.rejected);
+              for (var b in SenderMockBookingData.getMockBookings()) {
+                if (b.id == request.id || (b.status == SenderDeliveryStatus.pending && b.id.contains(request.id))) {
+                  SenderMockBookingData.updateBookingStatus(b.id, SenderDeliveryStatus.rejected);
+                }
+              }
               if (mounted) {
                 ScaffoldMessenger.of(context).clearSnackBars();
                 ScaffoldMessenger.of(context).showSnackBar(

@@ -60,6 +60,9 @@ class _SenderDeliveryFeedbackScreenState
         travellerName: widget.travellerName,
         route: widget.route,
       );
+      if (!_rating.isSubmitted) {
+        _rating = _rating.copyWith(rating: 0.0);
+      }
     }
 
     if (_rating.feedback != null) {
@@ -162,7 +165,7 @@ class _SenderDeliveryFeedbackScreenState
         ),
       );
 
-      Future.delayed(const Duration(milliseconds: 1200), () {
+      Future.delayed(const Duration(milliseconds: 500), () {
         if (!mounted) return;
         Navigator.of(context).pop(); // Close dialog
         Navigator.of(context).pushReplacement(

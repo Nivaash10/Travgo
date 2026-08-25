@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
+import '../../../models/receiver_model.dart';
+import '../data/sender_mock_booking_data.dart';
+import '../models/sender_booking.dart';
+import '../models/sender_delivery_request.dart';
+import '../models/sender_delivery_status.dart';
 import '../models/sender_search_query.dart';
 import '../models/sender_traveller_match.dart';
 import '../widgets/sender_traveller_card.dart';
-import 'parcel_details_screen.dart';
+import '../../traveler/repository/traveler_trip_repository.dart';
+import 'sender_booking_detail_screen.dart';
 
-/// Screen displaying matching travellers for a given [SenderSearchQuery].
+/// Screen displaying Step 4: Available Travellers for a given [SenderSearchQuery].
 class MatchingTravellersScreen extends StatelessWidget {
   final SenderSearchQuery query;
+  final ReceiverModel? receiver;
+  final String? parcelDescription;
+  final String? parcelCategory;
+  final int? parcelQuantity;
+  final String? specialInstructions;
+
+  final SenderDeliveryRequest? deliveryRequest;
   final List<SenderTravellerMatch> travellerMatches;
   final ValueChanged<SenderTravellerMatch>? onRequestDelivery;
   final VoidCallback? onModifySearch;
@@ -17,6 +30,12 @@ class MatchingTravellersScreen extends StatelessWidget {
   const MatchingTravellersScreen({
     super.key,
     required this.query,
+    this.receiver,
+    this.parcelDescription,
+    this.parcelCategory,
+    this.parcelQuantity,
+    this.specialInstructions,
+    this.deliveryRequest,
     this.travellerMatches = const [],
     this.onRequestDelivery,
     this.onModifySearch,
@@ -48,13 +67,23 @@ class MatchingTravellersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // Resolve matching travellers from repository if custom matches not passed
+    final resolvedMatches = travellerMatches.isNotEmpty
+        ? travellerMatches
+        : TravelerTripRepository().findMatches(
+            query.source,
+            query.destination,
+            weight: query.parcelWeightKg,
+            date: query.date,
+          );
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Available Travellers'),
+        title: const Text('Step 4: Available Travellers'),
         actions: [
           IconButton(icon: const Icon(Icons.tune), onPressed: onModifySearch),
         ],
@@ -97,68 +126,54 @@ class MatchingTravellersScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 8,
+                  Row(
                     children: [
                       _SummaryChip(
-                        icon: Icons.trip_origin,
-                        label:
-                            'From: ${query.source.isNotEmpty ? query.source : "Any"}',
+                        icon: Icons.flight_takeoff,
+                        label: 'From: ${query.source}',
                       ),
+                      const SizedBox(width: 12),
                       _SummaryChip(
-                        icon: Icons.location_on,
-                        label:
-                            'To: ${query.destination.isNotEmpty ? query.destination : "Any"}',
+                        icon: Icons.flight_land,
+                        label: 'To: ${query.destination}',
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
                       _SummaryChip(
                         icon: Icons.calendar_today,
                         label: 'Date: ${_formatDate(query.date)}',
                       ),
-                      if (query.parcelWeightKg != null)
+                      if (query.parcelWeightKg != null) ...[
+                        const SizedBox(width: 12),
                         _SummaryChip(
                           icon: Icons.scale,
                           label: 'Weight: ${query.parcelWeightKg} kg',
                         ),
+                      ],
                     ],
                   ),
                 ],
               ),
             ),
-            // Filter Chips Row (matching Stitch UI)
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Wrap(
-                spacing: 8.0,
-                children: const [
-                  Chip(label: Text('All Trips')),
-                  Chip(label: Text('Car')),
-                  Chip(label: Text('Train')),
-                  Chip(label: Text('EV Car')),
-                ],
-              ),
-            ),
 
             // Content Area (Loading / Error / Empty / Populated List)
-            Expanded(child: _buildContent(context)),
+            Expanded(child: _buildContent(context, resolvedMatches)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent(BuildContext context, List<SenderTravellerMatch> matches) {
     final theme = Theme.of(context);
 
-    // 1. Loading State
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // 2. Error State
     if (errorMessage != null && errorMessage!.isNotEmpty) {
       return Center(
         child: Padding(
@@ -178,15 +193,15 @@ class MatchingTravellersScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 errorMessage!,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[700],
+                  color: Colors.grey[600],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
@@ -198,8 +213,7 @@ class MatchingTravellersScreen extends StatelessWidget {
       );
     }
 
-    // 3. Empty State
-    if (travellerMatches.isEmpty) {
+    if (matches.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -213,14 +227,14 @@ class MatchingTravellersScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'No travellers found',
+                'No matching travellers found',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Travellers matching your route will appear here.',
+                "We couldn't find an active traveller for this route and date.",
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.grey[600],
@@ -238,23 +252,58 @@ class MatchingTravellersScreen extends StatelessWidget {
       );
     }
 
-    // 4. Populated Matches List
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      itemCount: travellerMatches.length,
+      itemCount: matches.length,
       itemBuilder: (context, index) {
-        final match = travellerMatches[index];
+        final match = matches[index];
         return SenderTravellerCard(
           match: match,
           onRequestDelivery: (selected) {
             if (onRequestDelivery != null) {
               onRequestDelivery!(selected);
             } else {
+              final newBooking = SenderBooking(
+                id: 'BKG-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+                status: SenderDeliveryStatus.pending,
+                createdAt: DateTime.now(),
+                deliveryPrice: selected.priceRupees,
+                canCancel: true,
+                canViewStatus: true,
+                pickupLocation: query.source,
+                deliveryLocation: query.destination,
+                travellerName: selected.travellerName,
+                request: SenderDeliveryRequest(
+                  searchQuery: query,
+                  traveller: selected,
+                  receiver: receiver ??
+                      ReceiverModel(
+                        id: 'REC-101',
+                        fullName: 'Priya Sharma',
+                        phoneNumber: '+91 98765 01234',
+                        deliveryAddress: 'Flat 402, Sunshine Apartments, Anna Nagar, ${query.destination}',
+                      ),
+                  parcelDescription: parcelDescription ?? 'Books and documents',
+                  parcelWeightKg: query.parcelWeightKg ?? 2.5,
+                  parcelCategory: parcelCategory ?? 'Documents',
+                  parcelQuantity: parcelQuantity ?? 1,
+                  specialInstructions: specialInstructions,
+                ),
+              );
+
+              SenderMockBookingData.addBooking(newBooking);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Delivery request sent to ${selected.travellerName}!'),
+                  backgroundColor: const Color(0xFF2563EB),
+                ),
+              );
+
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => ParcelDetailsScreen(
-                    searchQuery: query,
-                    traveller: selected,
+                  builder: (context) => SenderBookingDetailScreen(
+                    booking: newBooking,
                   ),
                 ),
               );

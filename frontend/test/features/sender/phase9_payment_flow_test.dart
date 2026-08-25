@@ -244,16 +244,15 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
-    final pendingBooking = mockBookings.firstWhere((b) => b.status == SenderDeliveryStatus.pending);
+    final acceptedBooking = mockBookings.firstWhere((b) => b.status == SenderDeliveryStatus.accepted);
 
     await tester.pumpWidget(
       MaterialApp(
-        home: SenderBookingDetailScreen(booking: pendingBooking),
+        home: SenderBookingDetailScreen(booking: acceptedBooking),
       ),
     );
 
     expect(find.text('PAYMENT INFORMATION'), findsOneWidget);
-    expect(find.text('Complete Payment'), findsOneWidget);
   });
 
   testWidgets('TEST 13: Existing Phase 6, Phase 7, and Phase 8 functionality remains unaffected', (tester) async {

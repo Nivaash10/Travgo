@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/sender_delivery_request.dart';
+import '../../traveler/repository/traveler_trip_repository.dart';
 import 'booking_confirmation_screen.dart';
+import 'matching_travellers_screen.dart';
 
-/// Screen for reviewing a Sender's delivery request before submission.
+/// Step 4 of Sender Delivery Workflow: Review Delivery Request.
 class ReviewDeliveryRequestScreen extends StatelessWidget {
   final SenderDeliveryRequest request;
   final ValueChanged<SenderDeliveryRequest>? onSubmitRequest;
@@ -13,47 +15,81 @@ class ReviewDeliveryRequestScreen extends StatelessWidget {
     this.onSubmitRequest,
   });
 
-  void _onConfirmSubmitted(BuildContext context) {
+  void _onFindMatchingTravellers(BuildContext context) {
     if (onSubmitRequest != null) {
       onSubmitRequest!(request);
+      return;
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => BookingConfirmationScreen(
-          request: request,
-        ),
-      ),
+    final matches = TravelerTripRepository().findMatches(
+      request.searchQuery.source,
+      request.searchQuery.destination,
+      weight: request.parcelWeightKg,
     );
+
+    if (matches.isNotEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => MatchingTravellersScreen(
+            query: request.searchQuery,
+            deliveryRequest: request,
+            travellerMatches: matches,
+          ),
+        ),
+      );
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => BookingConfirmationScreen(
+            request: request,
+          ),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final receiver = request.receiver;
     final traveller = request.traveller;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Review Delivery Request'),
+        title: const Text('Step 4: Review Delivery Request'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Step Progress Indicator
+              Row(
+                children: [
+                  _buildStepDot(number: '1', title: 'Route', isComplete: true),
+                  _buildStepLine(isComplete: true),
+                  _buildStepDot(number: '2', title: 'Receiver', isComplete: true),
+                  _buildStepLine(isComplete: true),
+                  _buildStepDot(number: '3', title: 'Parcel', isComplete: true),
+                  _buildStepLine(isComplete: true),
+                  _buildStepDot(number: '4', title: 'Review', isActive: true),
+                ],
+              ),
+              const SizedBox(height: 24),
+
               Text(
-                'Review Your Details',
-                style: theme.textTheme.headlineSmall?.copyWith(
+                'Review Delivery Request',
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                'Please verify traveller and parcel details before submitting.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[700],
-                ),
+                'Please verify all details before submitting.',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
               const SizedBox(height: 20),
 
@@ -67,34 +103,18 @@ class ReviewDeliveryRequestScreen extends StatelessWidget {
                     children: [
                       Text(
                         traveller.travellerName,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       if (traveller.isVerified)
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: Colors.green[50],
+                            color: const Color(0xFFECFDF5),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.green[600]!),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.verified,
-                                  size: 14, color: Colors.green[700]),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Verified',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green[800],
-                                ),
-                              ),
-                            ],
+                          child: const Text(
+                            'Verified',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
                           ),
                         ),
                     ],
@@ -102,34 +122,60 @@ class ReviewDeliveryRequestScreen extends StatelessWidget {
                   const SizedBox(height: 6),
                   _DetailRow(label: 'Route', value: traveller.route),
                   _DetailRow(label: 'Travel Date/Time', value: traveller.travelDateTime),
-                  _DetailRow(
-                    label: 'Rating',
-                    value: traveller.rating != null
-                        ? '★ ${traveller.rating!.toStringAsFixed(1)}'
-                        : 'No rating',
-                  ),
+                  if (traveller.rating != null)
+                    _DetailRow(label: 'Rating', value: '★ ${traveller.rating!.toStringAsFixed(1)}'),
                 ],
               ),
               const SizedBox(height: 16),
 
-              // Parcel Details Section
+              // Route & Schedule Card
+              _ReviewSectionCard(
+                title: 'ROUTE & SCHEDULE',
+                icon: Icons.alt_route,
+                children: [
+                  _DetailRow(label: 'Pickup Location', value: request.searchQuery.source),
+                  _DetailRow(label: 'Destination', value: request.searchQuery.destination),
+                  if (request.searchQuery.date != null)
+                    _DetailRow(
+                      label: 'Travel Date',
+                      value: '${request.searchQuery.date!.day}/${request.searchQuery.date!.month}/${request.searchQuery.date!.year}',
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Receiver Details Card
+              _ReviewSectionCard(
+                title: 'RECEIVER DETAILS',
+                icon: Icons.person_pin_circle_outlined,
+                children: [
+                  _DetailRow(label: 'Full Name', value: receiver?.fullName ?? 'Priya Sharma'),
+                  _DetailRow(label: 'Phone Number', value: receiver?.phoneNumber ?? '+91 98765 01234'),
+                  _DetailRow(label: 'Delivery Address', value: receiver?.deliveryAddress ?? request.searchQuery.destination),
+                  if (receiver?.landmark != null && receiver!.landmark!.isNotEmpty)
+                    _DetailRow(label: 'Landmark', value: receiver.landmark!),
+                  if (receiver?.pincode != null && receiver!.pincode!.isNotEmpty)
+                    _DetailRow(label: 'PIN Code', value: receiver.pincode!),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Parcel Details Card
               _ReviewSectionCard(
                 title: 'PARCEL DETAILS',
                 icon: Icons.inventory_2_outlined,
                 children: [
-                  _DetailRow(label: 'Description', value: request.parcelDescription),
                   _DetailRow(label: 'Category', value: request.parcelCategory),
+                  _DetailRow(label: 'Description', value: request.parcelDescription),
                   _DetailRow(label: 'Weight', value: '${request.parcelWeightKg} kg'),
-                  if (request.specialInstructions != null &&
-                      request.specialInstructions!.isNotEmpty)
-                    _DetailRow(
-                        label: 'Special Instructions',
-                        value: request.specialInstructions!),
+                  _DetailRow(label: 'Quantity', value: '${request.parcelQuantity} pcs'),
+                  if (request.specialInstructions != null && request.specialInstructions!.isNotEmpty)
+                    _DetailRow(label: 'Special Instructions', value: request.specialInstructions!),
                 ],
               ),
               const SizedBox(height: 16),
 
-              // Delivery & Price Summary Section
+              // Delivery & Price Summary Card
               _ReviewSectionCard(
                 title: 'DELIVERY & PRICE SUMMARY',
                 icon: Icons.payments_outlined,
@@ -154,7 +200,7 @@ class ReviewDeliveryRequestScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
               // Action Buttons Row
               Row(
@@ -175,8 +221,10 @@ class ReviewDeliveryRequestScreen extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: ElevatedButton(
-                      onPressed: () => _onConfirmSubmitted(context),
+                      onPressed: () => _onFindMatchingTravellers(context),
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -193,6 +241,43 @@ class ReviewDeliveryRequestScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStepDot({required String number, required String title, bool isActive = false, bool isComplete = false}) {
+    final color = isComplete || isActive ? const Color(0xFF2563EB) : Colors.grey[400]!;
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 12,
+          backgroundColor: isComplete ? const Color(0xFF10B981) : (isActive ? const Color(0xFF2563EB) : Colors.grey[200]),
+          child: isComplete
+              ? const Icon(Icons.check, size: 14, color: Colors.white)
+              : Text(
+                  number,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: isActive ? Colors.white : Colors.grey[600],
+                  ),
+                ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(fontSize: 10, fontWeight: isActive ? FontWeight.bold : FontWeight.normal, color: color),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStepLine({required bool isComplete}) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        color: isComplete ? const Color(0xFF10B981) : Colors.grey[300],
       ),
     );
   }
@@ -216,7 +301,8 @@ class _ReviewSectionCard extends StatelessWidget {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -226,7 +312,7 @@ class _ReviewSectionCard extends StatelessWidget {
             Row(
               children: [
                 Icon(icon, size: 18, color: theme.colorScheme.primary),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(
                   title,
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -272,7 +358,7 @@ class _DetailRow extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
             ),
           ),
         ],

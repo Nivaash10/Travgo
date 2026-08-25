@@ -5,6 +5,7 @@ import 'package:frontend/features/sender/models/sender_search_query.dart';
 import 'package:frontend/features/sender/models/sender_traveller_match.dart';
 import 'package:frontend/features/sender/screens/booking_confirmation_screen.dart';
 import 'package:frontend/features/sender/screens/parcel_details_screen.dart';
+import 'package:frontend/features/sender/screens/matching_travellers_screen.dart';
 import 'package:frontend/features/sender/screens/review_delivery_request_screen.dart';
 
 void main() {
@@ -35,7 +36,7 @@ void main() {
   );
 
   group('ParcelDetailsScreen Tests', () {
-    testWidgets('1 & 2: Renders selected traveller details and pre-fills search weight', (tester) async {
+    testWidgets('1 & 2: Renders parcel details form with pre-filled search weight', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: ParcelDetailsScreen(
@@ -45,9 +46,6 @@ void main() {
         ),
       );
 
-      expect(find.text('Arun'), findsOneWidget);
-      expect(find.text('Coimbatore → Chennai'), findsOneWidget);
-      expect(find.text('Travel: 25 Aug 2026 • 8:30 AM'), findsOneWidget);
       expect(find.text('2.5'), findsOneWidget); // Pre-filled weight
     });
 
@@ -61,7 +59,7 @@ void main() {
         ),
       );
 
-      final reviewButton = find.text('Review Delivery Request');
+      final reviewButton = find.text('Find Available Travellers');
       await tester.ensureVisible(reviewButton);
       await tester.tap(reviewButton);
       await tester.pumpAndSettle();
@@ -69,7 +67,7 @@ void main() {
       expect(find.text('Please enter a parcel description'), findsOneWidget);
     });
 
-    testWidgets('5 & 6: Invalid weight (0 or exceeding capacity) is rejected', (tester) async {
+    testWidgets('5 & 6: Invalid weight (0) is rejected', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: ParcelDetailsScreen(
@@ -79,7 +77,7 @@ void main() {
         ),
       );
 
-      final reviewButton = find.text('Review Delivery Request');
+      final reviewButton = find.text('Find Available Travellers');
 
       // Enter description
       await tester.enterText(find.byType(TextFormField).at(0), 'Books');
@@ -90,16 +88,9 @@ void main() {
       await tester.tap(reviewButton);
       await tester.pumpAndSettle();
       expect(find.text('Please enter a valid parcel weight'), findsOneWidget);
-
-      // Enter weight exceeding traveller capacity (10 kg > 5.0 kg)
-      await tester.enterText(find.byType(TextFormField).at(1), '10.0');
-      await tester.ensureVisible(reviewButton);
-      await tester.tap(reviewButton);
-      await tester.pumpAndSettle();
-      expect(find.text('Weight exceeds available capacity (5.0 kg)'), findsOneWidget);
     });
 
-    testWidgets('7: Valid parcel details navigate to ReviewDeliveryRequestScreen', (tester) async {
+    testWidgets('7: Valid parcel details navigate to MatchingTravellersScreen', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: ParcelDetailsScreen(
@@ -109,13 +100,13 @@ void main() {
         ),
       );
 
-      final reviewButton = find.text('Review Delivery Request');
+      final reviewButton = find.text('Find Available Travellers');
       await tester.enterText(find.byType(TextFormField).at(0), 'Books and clothes');
       await tester.ensureVisible(reviewButton);
       await tester.tap(reviewButton);
       await tester.pumpAndSettle();
 
-      expect(find.byType(ReviewDeliveryRequestScreen), findsOneWidget);
+      expect(find.byType(MatchingTravellersScreen), findsOneWidget);
     });
   });
 

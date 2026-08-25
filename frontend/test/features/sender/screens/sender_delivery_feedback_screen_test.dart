@@ -279,7 +279,7 @@ void main() {
   testWidgets(
     'TEST 12: Existing completed booking functionality still renders correctly',
     (tester) async {
-      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      await tester.binding.setSurfaceSize(const Size(800, 2400));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
       final deliveredBooking = SenderMockBookingData.getMockBookings()
@@ -292,6 +292,7 @@ void main() {
       expect(find.text('Rate Traveller'), findsOneWidget);
       expect(find.text('View Delivery Proof'), findsOneWidget);
 
+      await tester.ensureVisible(find.text('Rate Traveller'));
       await tester.tap(find.text('Rate Traveller'));
       await tester.pumpAndSettle();
 

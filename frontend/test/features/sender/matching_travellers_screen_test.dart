@@ -56,8 +56,8 @@ void main() {
       ),
     );
 
-    expect(find.text('No travellers found'), findsOneWidget);
-    expect(find.text('Travellers matching your route will appear here.'), findsOneWidget);
+    expect(find.text('No matching travellers found'), findsOneWidget);
+    expect(find.text("We couldn't find an active traveller for this route and date."), findsOneWidget);
     expect(find.text('Modify Search'), findsAtLeastNWidgets(1));
   });
 

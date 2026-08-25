@@ -89,7 +89,7 @@ void main() {
   testWidgets(
     'TASK 11.5: Delivered booking exposes completion, proof, and rating actions',
     (tester) async {
-      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      await tester.binding.setSurfaceSize(const Size(800, 2400));
       addTearDown(() async => await tester.binding.setSurfaceSize(null));
 
       final deliveredBooking = SenderMockBookingData.getMockBookings()
@@ -102,6 +102,7 @@ void main() {
       expect(find.text('View Delivery Proof'), findsOneWidget);
       expect(find.text('Rate Traveller'), findsOneWidget);
 
+      await tester.ensureVisible(find.text('View Delivery Proof'));
       await tester.tap(find.text('View Delivery Proof'));
       await tester.pumpAndSettle();
 

@@ -191,6 +191,54 @@ class _SenderTrackingScreenState extends State<SenderTrackingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_tracking.currentStatus == SenderTrackingStatus.pickupPending ||
+                _tracking.currentStatus == SenderTrackingStatus.accepted ||
+                _tracking.currentStatus == SenderTrackingStatus.pending) ...[
+              Container(
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.hourglass_empty_rounded, color: Color(0xFFD97706), size: 22),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Waiting for pickup verification — Live GPS will start once parcel is picked up.',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF92400E), fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (_tracking.currentStatus == SenderTrackingStatus.delivered) ...[
+              Container(
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFA7F3D0)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 22),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Tracking ended — Delivery completed.',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF065F46), fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             // 1. Map Visualizer Canvas
             SenderTrackingRoute(
               bookingId: _tracking.bookingId,

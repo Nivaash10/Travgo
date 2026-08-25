@@ -16,17 +16,12 @@ class ReviewScreen extends StatelessWidget {
     this.newReview,
   });
 
-  static const _dummyReviews = [
-    Review(reviewerName: 'Priya S.', stars: 5, text: 'Very careful with the package, delivered early.', date: '2 days ago'),
-    Review(reviewerName: 'Karthik R.', stars: 4, text: 'Good communication throughout the trip.', date: '1 week ago'),
-    Review(reviewerName: 'Divya M.', stars: 5, date: '2 weeks ago'),
-    Review(reviewerName: 'Suresh N.', stars: 4, text: 'Slight delay but kept me updated.', date: '3 weeks ago'),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final reviews = [if (newReview != null) newReview!, ..._dummyReviews];
-    final avg = reviews.map((r) => r.stars).reduce((a, b) => a + b) / reviews.length;
+    final reviews = [if (newReview != null) newReview!];
+    final avg = reviews.isNotEmpty
+        ? (reviews.map((r) => r.stars).reduce((a, b) => a + b) / reviews.length)
+        : 0.0;
 
     return Scaffold(
       backgroundColor: kBg,
@@ -72,7 +67,56 @@ class ReviewScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            for (final r in reviews) _reviewCard(r),
+            if (reviews.isEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: kBorder),
+                ),
+                child: const Column(
+                  children: [
+                    Icon(Icons.rate_review_outlined, size: 36, color: kMuted),
+                    SizedBox(height: 10),
+                    Text(
+                      'No reviews yet',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: kText),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Reviews submitted for this user will appear here.',
+                      style: TextStyle(fontSize: 12, color: kMuted),
+                    ),
+                  ],
+                ),
+              )
+            else
+              for (final r in reviews) _reviewCard(r),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+                icon: const Icon(Icons.check_circle_rounded),
+                label: const Text(
+                  'Done • Return to Dashboard',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kAccent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

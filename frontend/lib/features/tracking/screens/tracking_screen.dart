@@ -16,6 +16,7 @@ import '../../otp/screens/delivery_otp_screen.dart';
 import '../../otp/services/otp_service.dart' hide ParcelStatus;
 import '../../otp/widgets/travgo_theme.dart';
 import '../models/tracking_model.dart';
+import '../../../models/travgo_delivery_booking.dart';
 import '../services/location_service.dart';
 import '../services/routing_service.dart';
 import '../widgets/tracking_map.dart';
@@ -124,9 +125,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
     } else {
       _parcelId = widget.parcelId;
       _sourceName = widget.sourceName;
-      _sourceLocation = widget.sourceLocation;
+      _sourceLocation = (widget.sourceLocation == const LatLng(11.0168, 76.9558) && widget.sourceName != 'Coimbatore')
+          ? TravgoDeliveryBooking.getCityCoordinates(widget.sourceName)
+          : widget.sourceLocation;
       _destinationName = widget.destinationName;
-      _destinationLocation = widget.destinationLocation;
+      _destinationLocation = (widget.destinationLocation == const LatLng(13.0827, 80.2707) && widget.destinationName != 'Chennai')
+          ? TravgoDeliveryBooking.getCityCoordinates(widget.destinationName)
+          : widget.destinationLocation;
     }
   }
 
@@ -420,7 +425,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   void _navigateToDelivery() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const DeliveryOtpScreen()),
+      MaterialPageRoute(builder: (_) => DeliveryOtpScreen(trip: widget.trip)),
     );
     if (mounted) {
       setState(() {
